@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Chat app</title>
+    <script
+      src="https://kit.fontawesome.com/bc9e1eafc4.js"
+      crossorigin="anonymous"
+    ></script>
+    <link rel="stylesheet" type="text/css" href="./styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <div id="container">
+      <h1 id="title">MiChat</h1>
+      <div id="chatSection">
+        <div class="chat-window">
+          <div>
+            <div class="user-message">
+              <i id="user-icon" class="icon fa-solid fa-user"></i>
+              <span class="name">Imanol Conde</span>
+              <span class="date">12/10/2022 16:10</span>
+              <span class="text"
+                >Lorem ipsum dolor sit, amet consectetur adipisicing elit.
+                Accusantium, ea aliquam commodi ipsam sequi pariatur debitis
+                fugiat obcaecati odio sint animi, dicta eos iste harum deleniti
+                mollitia nostrum repellat distinctio?</span>
+            </div>
+          </div>
+        </div>
+        <form class="chat-form">
+          <input placeholder="..." type="text" class="chat-input" />
+            <button type="submit" class="chat-submit">
+              <i id="send-icon" class="icon fa-solid fa-paper-plane"></i>
+            </button>
+            <audio id="message-sent-audio">
+              <source src="./media/discord-notification.mp3" type="audio/mpeg">
+            </audio>
+            <label for="chat-file">
+              <i class="icon fa-regular fa-folder-closed"></i>
+              <input id="chat-file" style="display: hidden;" type="file"/>
+            </label>
+        </form>
+      </div>
+    </div>
+
+    <script src="socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>
