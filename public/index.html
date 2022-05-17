@@ -2,12 +2,13 @@
 <html>
   <head>
     <title>Chat app</title>
-    <script
-      src="https://kit.fontawesome.com/bc9e1eafc4.js"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://kit.fontawesome.com/bc9e1eafc4.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
     <link rel="stylesheet" type="text/css" href="./styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
   </head>
   <body>
     <div id="container">
@@ -24,26 +25,44 @@
                 Accusantium, ea aliquam commodi ipsam sequi pariatur debitis
                 fugiat obcaecati odio sint animi, dicta eos iste harum deleniti
                 mollitia nostrum repellat distinctio?</span>
+                <div class="files">
+                  <div class="file">
+                    
+                    <i class="represent icon fa-solid fa-file"></i>
+                    <div class="info">
+                      <a href="#" class="name">@fileName</a>
+                      <span class="size">@fileSize</span>
+                    </div>
+                    <i class="download icon fa-solid fa-download"></i>
+                  </div>
+                </div>
             </div>
           </div>
         </div>
-        <form class="chat-form">
-          <input placeholder="..." type="text" class="chat-input" />
-            <button type="submit" class="chat-submit">
-              <i id="send-icon" class="icon fa-solid fa-paper-plane"></i>
-            </button>
-            <audio id="message-sent-audio">
-              <source src="./media/discord-notification.mp3" type="audio/mpeg">
-            </audio>
-            <label for="chat-file">
-              <i class="icon fa-regular fa-folder-closed"></i>
-              <input id="chat-file" style="display: hidden;" type="file"/>
-            </label>
-        </form>
+        <div class="form-wrap without-files">
+          <div class="scrolleable-without-bar file-prevs">
+            <!--<div class="file-prev">
+              <i class="icon fa-solid fa-file"></i>
+              <p class="file-name">
+                @Arboles Booleanas.pdf
+              </p>
+            </div> file-prev element definition--> 
+          </div>
+          <form class="chat-form" action="http://localhost:3000/uploads/" method="post" enctype="multipart/form-data">
+            <input placeholder="..." type="text" class="chat-input" />
+              <button type="submit" class="chat-submit">
+                <i id="send-icon" class="icon fa-regular fa-paper-plane"></i>
+              </button>
+              <audio id="message-sent-audio">
+                <source src="./media/discord-notification.mp3" type="audio/mpeg">
+              </audio>
+              <label for="chat-file">
+                <i class="icon fa-regular fa-folder-closed"></i>
+                <input id="chat-file" type="file" name="files" multiple/>
+              </label>
+          </form>
+        </div>
       </div>
     </div>
-
-    <script src="socket.io/socket.io.js"></script>
-    <script src="script.js"></script>
   </body>
 </html>

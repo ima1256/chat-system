@@ -10,6 +10,11 @@
   margin: 0px;
   font-family: Arial, Helvetica, sans-serif;
 }
+
+a {
+  text-decoration: none;
+}
+
 #title {
   padding: 20px 0px 20px 0px;
   text-align: center;
@@ -19,6 +24,10 @@ button {
   background: none;
   border: 0px;
   margin: 0px;
+}
+
+button .icon{
+  color: inherit;
 }
 
 #container {
@@ -43,8 +52,7 @@ button {
 }
 .icon {
   font-size: 20px;
-  max-width: 100%;
-  height: auto;
+  text-align: center;
 }
 
 label[for="chat-file"] {
@@ -57,8 +65,18 @@ label[for="chat-file"] {
   /*padding: 5px 0px 5px 0px;*/
 }
 .chat-window {
-  height: 70vh;
+  height: 60vh;
   overflow-y: scroll;
+}
+
+/* hide scrollbar but allow scrolling */
+.scrolleable-without-bar {
+  -ms-overflow-style: none; /* for Internet Explorer, Edge */
+  scrollbar-width: none; /* for Firefox */
+}
+
+.scrolleable-without-bar::-webkit-scrollbar {
+  display: none; /* for Chrome, Safari, and Opera */
 }
 
 /* hide scrollbar but allow scrolling */
@@ -76,20 +94,58 @@ label[for="chat-file"] {
   padding-bottom: 25px;
 }
 
-.user-message .text {
-  display: block;
-  width: calc(100% - 35px -2*10px);
-  margin-top: 10px;
+.user-message .text,  .user-message .files{
+  display: flex;
+  width: calc(100% - 35px - 2*10px);
+  margin-top: 14px;
+  flex-direction: column;
+  grid-gap: 10px;
   margin-left: 35px;
-  padding: 5px 10px;
-  border-radius: 10px;
-  color: var(--message-text);
-  background-color: var(--message-background);
 }
 
 .user-message #user-icon {
   margin-right: 5px;
   font-size: 15px;
+}
+
+.user-message .files .file {
+  display: flex;
+  justify-content: space-between;
+  width: fit-content;
+  align-items: center;
+  padding: 8px 14px;
+}
+
+.user-message .files .file .info {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-message .files .file .info .name{
+  color: white;
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.user-message .files .file .info .size{
+  font-size: 15px;
+}
+
+.user-message .files .file .icon.represent {
+  font-size: 40px;
+  margin-right: 10px;
+}
+
+.user-message .files .file .icon.download {
+  font-size: 20px;
+  margin-left: 10px;
+  cursor: pointer;
+}
+
+.user-message .files .file {
+  background-color: var(--message-background);
+  color: var(--message-text);
+  border-radius: 10px;
 }
 
 #chatSection {
@@ -98,4 +154,76 @@ label[for="chat-file"] {
   border-radius: 10px;
   padding: 10px;
   background: var(--chat-background);
+}
+
+/*form */
+.form-wrap {
+  display: flex;
+  flex-direction: column;
+  --general-padding: 8px;
+  --inter-padding: 20px;
+  background: #ccc;
+  padding: var(--general-padding) var(--general-padding) var(--general-padding) var(--general-padding);
+  grid-row-gap: var(--inter-padding);
+  border-radius: 10px;
+  border: 1px solid #444;
+  background-color: var(--message-background);
+}
+
+/*File Previsualization*/
+.form-wrap.without-files {
+  padding-top: var(--general-padding);
+}
+
+.form-wrap.with-files {
+  padding-top: var(--inter-padding);
+}
+
+.form-wrap, form, form button {
+  color: var(--message-text);
+}
+
+.file-prevs {
+  --file-prevs-padding: 20px;
+  display: none;
+  grid-gap: 10px;
+  padding: 0px var(--file-prevs-padding) 0px var(--file-prevs-padding);
+  overflow-x: scroll;
+  max-width: calc(100% - 2*var(--file-prev-padding));
+}
+
+.file-prev {
+  --file-prev-padding: 10px;
+  display: flex;
+  flex-direction: column;
+  width: 100px;
+  overflow: hidden;
+  position: relative;
+  background: #444;
+  border-radius: 10px;
+  padding: var(--file-prev-padding);
+  padding-right: calc(var(--file-prev-padding) - 7px);
+}
+
+.file-prev .dots {
+  position: absolute;
+  bottom: var(--file-prev-padding);
+  right: var(--file-prev-padding);
+  padding-left: 3px;
+  background: inherit;
+}
+
+.file-prev .icon {
+  --height: 100px;
+  font-size: 60px;
+  height: var(--height);
+  width: auto;
+  line-height: var(--height);
+}
+
+.file-prev .file-name {
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
