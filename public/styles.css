@@ -203,14 +203,7 @@ label[for="chat-file"] {
   border-radius: 10px;
   padding: var(--file-prev-padding);
   padding-right: calc(var(--file-prev-padding) - 7px);
-}
-
-.file-prev .dots {
-  position: absolute;
-  bottom: var(--file-prev-padding);
-  right: var(--file-prev-padding);
-  padding-left: 3px;
-  background: inherit;
+  justify-content: space-between;
 }
 
 .file-prev .icon {
@@ -219,6 +212,10 @@ label[for="chat-file"] {
   height: var(--height);
   width: auto;
   line-height: var(--height);
+}
+
+.file-prev .image-icon {
+
 }
 
 .file-prev .file-name {
