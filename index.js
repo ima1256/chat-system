@@ -23,7 +23,7 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname + '/public')));
-app.use(express.static(path.join(__dirname + '/uploads')));
+app.use('/uploads', express.static(path.join(__dirname + '/uploads')));
 
 app.get('/', (req, res) => {
     res.send('Bienvenido a la web');
@@ -59,7 +59,7 @@ const mongoose = require('mongoose');
 //En esta ruta nos mandan por el body el 
 //*id del servidor - server
 //*cuantos mensajes se quieren cargar - numMessages
-app.get('/uploads', async (req,res) => {
+/*app.get('/uploads', async (req,res) => {
     let messages = await db.getMessages(req.body.server, req.body.numMessages);
 
     let response = {
@@ -80,7 +80,7 @@ app.get('/uploads', async (req,res) => {
 
     //Procesamos lo que nos devuelve el servidor para mostrarlo bonito al frontend
     res.send(response);
-})
+})*/
 
 app.post('/uploads', async (req, res) => {
 
