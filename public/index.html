@@ -2,30 +2,58 @@
 <html>
   <head>
     <title>Chat app</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.13.0/css/all.min.css" rel="stylesheet">
     <script src="https://kit.fontawesome.com/bc9e1eafc4.js" crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="socket.io/socket.io.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/filesize/8.0.7/filesize.min.js"></script>
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/11.2.0/highlight.min.js"></script>
     <script src="./scripts/moment.js"></script>
     <script src="./scripts/moment-with-locales.js"></script>
-    <script>
-      console.log(moment().calendar());
-    </script>
+    <script src="./scripts/jqueryUi/jquery-ui-1.9.2.custom.min.js"></script>
+    <script src="./scripts/jqueryUi/jquery-1.8.3.js"></script>
+    <link rel="stylesheet" href="./scripts/jqueryUi/jquery-ui-1.9.2.custom.min.css">
+
+    <link rel="shortcut icon" href="#" />
     <script src="file-previsualization.js"></script>
     <script src="script.js"></script>
+    <link rel="stylesheet" href="css/poppins/stylesheet.css">
     <link rel="stylesheet" type="text/css" href="./styles.css" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
   </head>
   <body>
-    <div id="container">
-      <h1 id="title">MiChat</h1>
 
+    <h1 id="title">MiChat</h1>
+    <div id="container">
+     
       <div id="channels-section">
         <div class="text-channels">
           <div class="title">
+            <span class="hide">></span>
             <h2>Text Channels</h2>
-            <span class="icon">+</span>
+            <span class="icon add">+</span>
+          </div>
+          <div class="channels flex-c">
+            <div class="channel">
+              <span class="no-light">#</span>
+              <span class="light">
+                canal-de-texto1-dfdsddddddddddddddddddddddddd-dddddddddddd
+              </span>
+            </div>
+            <div class="channel">
+              <span class="no-light">#</span>
+              <span class="light">
+                canal-de-texto1
+              </span>
+            </div>
+            <div class="channel">
+              <span class="no-light">#</span>
+              <span class="light">
+                canal-de-texto2
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -33,7 +61,7 @@
       <div id="chatSection">
 
         <div class="chat-window">
-          <div>
+      
             <div class="user-message">
               <i id="user-icon" class="icon fa-solid fa-user"></i>
               <span class="name">Imanol Conde</span>
@@ -55,7 +83,7 @@
                   </div>
                 </div>
             </div>
-          </div>
+  
         </div>
         <div class="form-wrap without-files">
           <div class="scrolleable-without-bar file-prevs">
@@ -66,7 +94,7 @@
               </p>
             </div> file-prev element definition--> 
           </div>
-          <form class="chat-form" action="http://localhost:3000/uploads/" method="post" enctype="multipart/form-data">
+          <form class="chat-form" method="POST" enctype="multipart/form-data">
             <input placeholder="..." name ="text" type="text" class="chat-input" />
               <button type="submit" class="chat-submit">
                 <i id="send-icon" class="icon fa-regular fa-paper-plane"></i>

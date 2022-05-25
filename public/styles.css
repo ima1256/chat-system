@@ -1,23 +1,39 @@
+/*Style imports*/
+
+
 /* General Styles */
 
 :root {
   --chat-background:  #F1F0FF;
   --message-background:  #443266;
   --message-text: #C3C3E5;
+  --channels-section-background: 	hsl(244, 55%, 76%);
 }
 * {
   padding: 0px;
   margin: 0px;
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Poppins, Helvetica, sans-serif;
+}
+
+.flex-r {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-c {
+  display: flex;
+  flex-direction: column;
 }
 
 a {
   text-decoration: none;
 }
 
+
 #title {
   padding: 20px 0px 20px 0px;
   text-align: center;
+  width: 100%;
 }
 button {
   appearance: none;
@@ -31,8 +47,11 @@ button .icon{
 }
 
 #container {
-  width: 800px;
+  width: 1300px;
   margin: 0 auto;
+  display: flex;
+  flex-wrap: wrap;
+  height: 66vh;
 }
 
 .chat-form {
@@ -42,7 +61,7 @@ button .icon{
 
 
 .chat-input {
-  width: 400px;
+  width: 630px;
   height: 35px;
   border: solid 1px #444;
   padding: 0px 5px 0px 5px;
@@ -65,7 +84,6 @@ label[for="chat-file"] {
   /*padding: 5px 0px 5px 0px;*/
 }
 .chat-window {
-  height: 60vh;
   overflow-y: scroll;
 }
 
@@ -109,11 +127,46 @@ label[for="chat-file"] {
 }
 
 .user-message .files .file {
+  --file-padding: 8px;
   display: flex;
   justify-content: space-between;
   width: fit-content;
   align-items: center;
-  padding: 8px 14px;
+  padding: var(--file-padding);
+  color: var(--message-text);
+}
+
+.user-message .files .file.code {
+  flex-direction: column;
+  grid-gap: var(--file-padding);
+}
+
+.user-message .files .file .bottom {
+  display: flex;
+  justify-content: space-between;
+  width: -webkit-fill-available;
+}
+
+.user-message .files .file .bottom .info{
+  flex-direction: row;
+  grid-gap: 10px;
+}
+
+pre {
+  display: flex;
+}
+
+.user-message .files .file > *{
+  color: inherit;
+}
+
+.user-message .files .file .bottom > *{
+  color: inherit;
+}
+
+.user-message .files img.file {
+  width: calc(35% - 2*var(--file-padding));
+  height: auto;
 }
 
 .user-message .files .file .info {
@@ -148,12 +201,81 @@ label[for="chat-file"] {
   border-radius: 10px;
 }
 
+.user-message .files .file code{
+  height: 150px;
+  overflow: hidden;
+}
+
 #chatSection {
   float: left;
   border: 1px grey solid;
-  border-radius: 10px;
+  border-radius: 0px 10px 10px 0px;
   padding: 10px;
   background: var(--chat-background);
+  width: calc(80% - 2*10px - 2*1px);
+}
+
+#channels-section {
+
+  --channel-title: 22px;
+  --channel-add: 30px;
+  --font-color: #222;
+  display: flex;
+  float: left;
+  flex-direction: column;
+  width: calc(20% - 2*10px - 2*1px);
+  border-radius: 10px 0px 0px 10px;
+  border: 1px solid grey;
+  border-right: 0px;
+  padding: 10px;
+  background: var(--channels-section-background);
+  color: var(--font-color);
+}
+
+#channels-section .title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 96%;
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+#channels-section .title h2 {
+  font-size: var(--channel-title);
+  font-weight: 600;
+  transform: translate(-10px);
+}
+
+#channels-section .title .hide{
+  font-size: var(--channel-title);
+}
+
+#channels-section .title .icon.add {
+  font-size: var(--channel-add);
+  line-height: var(--channel-add);
+}
+
+#channels-section .channels {
+  padding-left: 13px;
+  grid-gap: 7px;
+}
+
+#channels-section .channels .channel{
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: var(--message-background);
+  color: var(--message-text);
+  padding: 3px;
+  border: 1px solid grey;
+  border-radius: 9px;
+  padding-left: 7px;
+  cursor: pointer;
+}
+
+#channels-section .channels .channel > *:hover:not(.no-light) {
+  color: white;
 }
 
 /*form */
