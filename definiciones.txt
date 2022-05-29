@@ -1,5 +1,0 @@
-Protocolo para nombrar a los ficheros:
-
-id unico para cada fichero guardandolos todos en la carpeta uploads
-cada mensaje guardara la referencia a sus ficheros
-

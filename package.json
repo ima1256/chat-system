@@ -4,12 +4,13 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "nodemon upload.js",
+    "test": "",
     "start": "nodemon index.js --ignore 'uploads/*'"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.1",
@@ -23,5 +24,9 @@
     "nodemon": "^2.0.16",
     "socket.io": "^4.5.0",
     "uuid": "^8.3.2"
+  },
+  "devDependencies": {
+    "jest": "^28.1.0",
+    "mockingoose": "^2.15.2"
   }
 }

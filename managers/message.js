@@ -1,19 +1,14 @@
-const db = require('../db/db');
+const db = require('../services/db');
 const _ = require('lodash');
 const path = require('path');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const fileManager = require('./files');
-
-const port = process.env.PORT;
-const hostname = process.env.HOST;
+const fileManager = require('../utils/files');
 
 async function saveMessage(req, res) {
 
     try {
-
-        await db.connect();
 
         //Guardamos cuando el mensaje no tiene ficheros
         if (!req.files) {
@@ -31,7 +26,6 @@ async function saveMessage(req, res) {
 
             //Cuando el mensaje tiene un unico fichero
             if (req.files.files.constructor !== Array) {
-                console.log('Hola');
                 await fileManager.saveFile(req.files.files, data);
             }
             //Cuando el mensaje tiene multiples ficheros
@@ -65,7 +59,6 @@ async function saveMessage(req, res) {
 async function getMessages(req, res) {
 
     try {
-        await db.connect();
 
         if(!req.body.server) return res.status(401).send({
             status: false, 
@@ -102,5 +95,26 @@ async function getMessages(req, res) {
 
 }
 
+async function getMessage(req,res) {
+    res.send({});
+}
+
+async function createMessage(req,res) {
+    res.send({});
+}
+
+async function updateMessage(req,res) {
+    res.send({});
+}
+
+async function deleteMessage(req,res) {
+    res.send({});
+}
+
 exports.saveMessage = saveMessage;
 exports.getMessages = getMessages;
+
+exports.getMessage = getMessage;
+exports.createMessage = createMessage;
+exports.updateMessage = updateMessage;
+exports.deleteMessage = deleteMessage;

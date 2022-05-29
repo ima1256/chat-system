@@ -11,18 +11,37 @@ const path = require('path');
 const port = process.env.PORT;
 const hostname = process.env.HOST;
 const messageManager = require('./managers/message');
+const userManager = require('./managers/user');
+const serverManager = require('./managers/server');
 
 //Middleweres
 app.use('/uploads', express.static(path.join(__dirname + '/uploads')));
 app.use(express.static(path.join(__dirname + '/public')));
 app.use(cors());
 app.use(bodyParser.json());
+//app.user(filter()) //Para ataques no-sql
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload({createParentPath: true}));  // enable files upload
 
 //Connection points
-app.get('/uploads', messageManager.getMessages);
-app.post('/uploads', messageManager.saveMessage);
+
+//User
+app.get('/user/:id', userManager.getUser);
+app.post('/user', userManager.createUser);
+app.put('/user/:id', userManager.updateUser);
+app.delete('/user/:id', userManager.deleteUser);
+
+//Server
+app.get('/server/:id', serverManager.getServer);
+app.post('/server', serverManager.createServer);
+app.put('/server/:id', serverManager.updateServer);
+app.delete('/server/:id', serverManager.deleteServer);
+
+//Message
+app.get('/message/:id', messageManager.getMessage);
+app.post('/message', messageManager.createMessage);
+app.put('/message/:id', messageManager.updateMessage);
+app.delete('/message/:id', messageManager.deleteMessage);
 
 
 //Sockets para mensajes de chat
