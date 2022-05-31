@@ -1,19 +1,7 @@
-const db = require('../db/db');
+const path = require('path');
 
-async function main() {
-    let usr = {
-        'name': 'Imanol Conde ',
-        'email': 'imanolcondeimfanol@gmail.com',
-        'password': 'rh*617/lat'
-    };
-    
-    await db.connect();
-    await db.createUser(usr);
-    await db.disconnect();
-}
-
-main();
+console.log(path.join(__dirname));
 
 
 
-  
+

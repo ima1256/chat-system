@@ -6,8 +6,11 @@ async function getUser(id) {
 }
 
 async function createUser(usr) {
+    let user = await User.create(usr);
+    //.select('name email password')
+    user = await User.findById(user._id, 'name email password').exec();
 
-    return await User.create(usr);
+    return user;
 }
 
 async function updateUser(id, usr) {
