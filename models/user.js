@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 let validator = require('validator');
 const bcrypt = require('bcryptjs');
 const passwordComplexity = require("joi-password-complexity");
-const fs = require('fs');
+
+const { existFile } = require('../utils/files');
+const Server = require('./server');
 
 const complexityOptions = {
   min: 8,
@@ -19,11 +21,13 @@ const avatarValidators = [
     validator: (value) => value.split('.').pop() == 'jpg', msg: 'El formato no es correcto'
   },
   {
-    validator: (value) => value.split('.').pop() == 'jpg', msg: 'El fichero no se encuentra en el directorio de uploads'
+    validator: (value) => existFile(value), msg: 'El fichero no se encuentra en el directorio de uploads'
   }
 ]
 
-const UserSchema = new mongoose.Schema({
+var UserSchema = new mongoose.Schema;
+
+UserSchema.add({
   name: {
     type: String,
     required: true,
@@ -43,41 +47,55 @@ const UserSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
+    //Si hacemos aqui la comprobación de la contraseña mongoose internamente no funciona
+    //no es apropiado ya que realmente guardamos la contraseña hasheada que no cumple las condiciones
     validate: (value) => {
-      //console.log(value, passwordComplexity(complexityOptions).validate(value));
-      return !passwordComplexity(complexityOptions).validate(value).error;
+      //console.log(value, ' ', this.password, this.name);
+      //return !passwordComplexity(complexityOptions).validate(value).error;
+      return true;
     }
   },
-  servers: [mongoose.SchemaTypes.ObjectId],
-  friends: [mongoose.SchemaTypes.ObjectId],
+  servers: {
+    type: [{
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'Server'
+    }]
+  },
+  friends: {
+    type: [{
+      type: mongoose.SchemaTypes.ObjectId
+    }],
+    validate: (newArray) => {
+      if (newArray.length == 0) return true;
+      let insertedFriendId = newArray[newArray.length-1];
+      return !insertedFriendId.equals(this._id) && newArray.find((value, index) => index != newArray.length - 1 && value.equals(insertedFriendId)) === undefined;
+    }
+  },
   avatar: {
     type: String,
     validate: avatarValidators
   } //This string points to the name of the file in the uploads folder
 });
 
-UserSchema.pre("save", function (next) {
-  const user = this;
+UserSchema.pre('save', { document: true, query: false }, function (next) {
+  let user = this;
 
-  if (this.isModified("password") || this.isNew) {
-    bcrypt.genSalt(10, function (saltError, salt) {
-      if (saltError) {
-        return next(saltError)
-      } else {
-        bcrypt.hash(user.password, salt, function (hashError, hash) {
-          if (hashError) {
-            return next(hashError)
-          }
+  // only hash the password if it has been modified (or is new)
+  if (!user.isModified('password') && !this.isNew) return next();
 
-          user.password = hash
-          next()
-        })
-      }
-    })
-  } else {
-    return next()
-  }
-})
+  // generate a salt
+  bcrypt.genSalt(10, function (err, salt) {
+    if (err) return next(err);
+
+    // hash the password using our new salt
+    bcrypt.hash(user.password, salt, function (err, hash) {
+      if (err) return next(err);
+      // override the cleartext password with the hashed one
+      user.password = hash;
+      next();
+    });
+  });
+});
 
 UserSchema.methods.comparePassword = function (password) {
   let match = true;
@@ -89,6 +107,13 @@ UserSchema.methods.comparePassword = function (password) {
   return match;
 }
 
+UserSchema.methods.checkPassword = function (password) {
+  let error = passwordComplexity(complexityOptions).validate(password).error;
+  return error;
+}
+
 const User = mongoose.model('users', UserSchema);
+
+
 
 module.exports = User;

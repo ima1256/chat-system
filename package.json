@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --testEnvironment=node --runInBand --detectOpenHandles ./services",
+    "test": "jest --testEnvironment=node --runInBand --detectOpenHandles  ./services --watch",
     "start": "nodemon index.js --ignore 'uploads/*'"
   },
   "author": "",

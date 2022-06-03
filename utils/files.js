@@ -2,13 +2,13 @@ const path = require('path');
 const fs = require('fs');
 const config = require('../config.json');
 
-module.exports.saveFile = async function saveFile(file, data = []) {
+async function saveFile(file, data = []) {
 
     //Here we give a unique id with its extension to the file saved in uploads dir
     let savedFileName = getUniqueId() + path.extname(file.name);
 
     //move photo to uploads directory
-    file.mv('../uploads/' + savedFileName);
+    file.mv(path.join(config.uploads, savedFileName));
 
     //push file details
     data.push({
@@ -19,6 +19,12 @@ module.exports.saveFile = async function saveFile(file, data = []) {
     });
 
     return data;
+}
+
+module.exports.saveFile = saveFile;
+
+module.exports.existFile = function(fileName) {
+    return fs.existsSync(path.join(config.uploads, fileName))
 }
 
 module.exports.removeUploads = async () => {
@@ -41,7 +47,3 @@ function getUniqueId() {
 }
 
 exports.saveFile = saveFile;
-
-module.exports.fileExist = async (fileName) => {
-
-}

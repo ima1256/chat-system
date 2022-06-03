@@ -1,3 +1,100 @@
 {
-    "uploads": "/home/imanol/Escritorio/chat-system/uploads"
+    "uploads": "/home/imanol/Escritorio/chat-system/uploads",
+    "tests": {
+        "user": {
+            "prepared": [
+                {
+                    "name": "Imanol Conde",
+                    "email": "imanolcondeimanol@gmail.com",
+                    "password": "rh*617/lat"
+                },
+                {
+                    "name": "Kevin",
+                    "email": "kevin@hotmail.com",
+                    "password": "123dfg9$"
+                },
+                {
+                    "name": "Katrin",
+                    "email": "katrin@ikasle.ehe.eus",
+                    "password": "12df670#"
+                },
+                {
+                    "name": "Sofia234234",
+                    "email": "fsfsd@gmail.co.es",
+                    "password": "dfsda3234_1"
+                }
+            ],
+            "correct": {
+                "names": [
+                    "sofia",
+                    "dfsf432423__F#",
+                    "DFGDSFGA"
+                ],
+                "emails": [
+                    "imanoldfsdfcondeimanol@gmail.com",
+                    "kevdgfdgind@htomail.com",
+                    "katfdgfdgrin@webposta.ehu.eus",
+                    "hola43dsfsdf4353454@gmail.com"
+                ],
+                "passwords": [
+                    "rh*617/lat",
+                    "123dfg678_",
+                    "hof_sf#%1122",
+                    "dldsafl__df343"
+                ],
+                "avatars": [
+                    "leon.jpg",
+                    "mono.jpg",
+                    "zebra.jpg"
+                ]
+            },
+            "incorrect": {
+                "names": [
+                    "f1",
+                    "1",
+                    "12f",
+                    "######2FFF"
+                ],
+                "emails": [
+                    "imanol4543543",
+                    "fdgdgsgf@gmail",
+                    "dgdfsdfs@1343.",
+                    "dsafsa@gmail.",
+                    "@hotmail.com"
+                ],
+                "passwords": [
+                    "123",
+                    "dsfsdfsdffdddddddddddddddddddddddddddddddddddddddddddddddddddfdsff_2323df",
+                    "gfdgsdgf<gdgfgg",
+                    "ddsfsd12121",
+                    "dsfdsfsdfsfs"
+                ],
+                "avatars": {
+                    "not_found": [
+                        "dadfafdf.jpg"
+                    ],
+                    "incorrect_format": [
+                        "sfafdadsd.js",
+                        "holaatodos.pdf",
+                        "safasfads.png"
+                    ]
+                }
+            }
+        },
+        "server": {
+            "prepared": [
+                
+                
+            ],
+            "correct": {}
+        },
+        "models": {},
+        "services": {
+            "getUser": {},
+            "createUser": {},
+            "updateUser": {},
+            "deleteUser": {}
+        },
+        "routes": {}
+    }
 }

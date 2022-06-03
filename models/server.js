@@ -1,17 +1,32 @@
 const mongoose = require('mongoose');
 
 const serverSchema = new mongoose.Schema({
-    moderators: {
-        type: [String]
-    },  //Id of the moderators of the server
-    creator: {
+    name: {
         type: String,
+        required: true,
+        validate: (value) => {
+            return /^[A-Za-z].*$/.test(value) && value.length >= 3;
+        }
+    },
+    moderators: [{
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User'
+    }],  //Id of the moderators of the server
+    creator: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'User',
         required: true
     },     //Id of the user that created the server
     textChannels: {
-        type: [String], //Array with ids
+        type: [{
+            type: mongoose.SchemaTypes.ObjectId,
+            ref: 'Channel' //Array with ids
+        }],
+        required: true,
+        validate: (value) => {
+            return value.length > 0;
+        }
     },
-    voiceChannels: [String] //Array with ids
 });
 
 const Server = mongoose.model('Server', serverSchema);
