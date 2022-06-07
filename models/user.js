@@ -2,9 +2,9 @@ const mongoose = require('mongoose');
 let validator = require('validator');
 const bcrypt = require('bcryptjs');
 const passwordComplexity = require("joi-password-complexity");
+const Server = require('./server');
 
 const { existFile } = require('../utils/files');
-const Server = require('./server');
 
 const complexityOptions = {
   min: 8,
@@ -68,7 +68,8 @@ UserSchema.add({
     validate: (newArray) => {
       if (newArray.length == 0) return true;
       let insertedFriendId = newArray[newArray.length-1];
-      return !insertedFriendId.equals(this._id) && newArray.find((value, index) => index != newArray.length - 1 && value.equals(insertedFriendId)) === undefined;
+      const notRepeated =   newArray.find((value, index) => index != newArray.length - 1 && value.equals(insertedFriendId)) === undefined;
+      return notRepeated;
     }
   },
   avatar: {
@@ -112,8 +113,26 @@ UserSchema.methods.checkPassword = function (password) {
   return error;
 }
 
+const {isImage} = require('../utils/files');
+
+UserSchema.methods.checkAvatar = function (avatar) {
+  let error = !isImage(avatar) ? new Error('El avatar debe de ser una imagen') : undefined;
+  return error;
+}
+
+//Este metodo nos devuelve en un json los campos que son requeridos
+UserSchema.statics.getRequiredPaths = function () {
+
+  let sPaths = UserSchema.requiredPaths();
+  let body = sPaths.filter(value => value != 'avatar');
+  let files = ['avatar'];
+  return {
+    body: body,
+    files: files
+  }
+
+}
+
 const User = mongoose.model('users', UserSchema);
-
-
 
 module.exports = User;

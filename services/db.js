@@ -6,24 +6,6 @@ const user = require('./user');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-
-//User
-async function getUser(id) {
-    return user.getUser(id);
-}
-
-async function createUser(usr) {
-    return await user.createUser(usr);
-}
-
-async function updateUser(id, usr) {
-    return await user.updateUser(id, usr);
-}
-
-async function deleteUser(id) {
-    return await user.deleteUser(id);
-}
-
 //const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const mongod = new MongoMemoryServer();
@@ -51,8 +33,3 @@ module.exports.clearDatabase = async () => {
         await collection.deleteMany();
     }
 }
-
-exports.getUser = getUser;
-exports.createUser = createUser;
-exports.updateUser = updateUser;
-exports.deleteUser = deleteUser;

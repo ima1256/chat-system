@@ -10,26 +10,26 @@ const path = require('path');
 //Constants
 const port = process.env.PORT;
 const hostname = process.env.HOST;
-const messageManager = require('./managers/message');
-const userManager = require('./managers/user');
-const serverManager = require('./managers/server');
+const messageManager = require('./controllers/message');
+const userController = require('./controllers/user');
+const serverManager = require('./controllers/server');
 
 //Middleweres
+app.use(cors());
 app.use('/uploads', express.static(path.join(__dirname + '/uploads')));
 app.use(express.static(path.join(__dirname + '/public')));
-app.use(cors());
 app.use(bodyParser.json());
 //app.user(filter()) //Para ataques no-sql
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(fileUpload({createParentPath: true}));  // enable files upload
+app.use(fileUpload({ createParentPath: true }));  // enable files upload
 
 //Connection points
 
 //User
-app.get('/user/:id', userManager.getUser);
-app.post('/user', userManager.createUser);
-app.put('/user/:id', userManager.updateUser);
-app.delete('/user/:id', userManager.deleteUser);
+app.get('/user/:id', userController.getUser);
+app.post('/user', userController.createUser);
+app.put('/user/:id', userController.updateUser);
+app.delete('/user/:id', userController.deleteUser);
 
 //Server
 app.get('/server/:id', serverManager.getServer);
@@ -57,6 +57,18 @@ io.on('connection', socket => {
     })
 })
 
-server.listen(port, () => {
-    console.log(`Servidor corriendo en puerto ${port} y host ${hostname}`);
+const db = require('./services/db');
+
+server.listen(port, async () => {
+
+    //Recuerda que siempre nos tenemos que conectar a la base de datos en 
+    //este punto de la aplicación no una vez por operación
+    try {
+        await db.connect();
+        console.log(`Servidor corriendo en puerto ${port} y host ${hostname}`);
+    } catch(err) {
+        console.log(err);
+        await db.closeDatabase();
+    }
+
 })

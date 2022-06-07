@@ -76,15 +76,15 @@
                     "incorrect_format": [
                         "sfafdadsd.js",
                         "holaatodos.pdf",
-                        "safasfads.png"
+                        "safasfads.py",
+                        "dfdgdfgsdfgfd.CLP"
                     ]
                 }
             }
         },
         "server": {
             "prepared": [
-                
-                
+                {"name": "MyExclusiveServer"}
             ],
             "correct": {}
         },
@@ -94,7 +94,9 @@
             "createUser": {},
             "updateUser": {},
             "deleteUser": {}
-        },
-        "routes": {}
+        }
+    },
+    "routes": {
+        "user": "user"
     }
 }

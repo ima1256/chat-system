@@ -4,7 +4,7 @@
         "201": "OK created",
         "301": "Moved to new URL",
         "304": "Not modified (Cached version)",
-        "400": "Bad request",
+        "400": "Bad request, the body names specified are not correct",
         "401": "Unauthorized",
         "404": "Not found",
         "500": "Internal server error"
@@ -30,7 +30,6 @@
         "500": "Internal server error"
     },
     "responseStructure": {
-        "status": true,
         "message": "Default Message"
     }
 }

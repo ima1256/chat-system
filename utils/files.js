@@ -5,7 +5,10 @@ const config = require('../config.json');
 async function saveFile(file, data = []) {
 
     //Here we give a unique id with its extension to the file saved in uploads dir
-    let savedFileName = getUniqueId() + path.extname(file.name);
+    let savedFileName = getUniqueId();
+    
+    if (!isImage(file.name)) savedFileName += path.extname(file.name);
+    else savedFileName += '.jpg';
 
     //move photo to uploads directory
     file.mv(path.join(config.uploads, savedFileName));
@@ -13,17 +16,22 @@ async function saveFile(file, data = []) {
     //push file details
     data.push({
         name: file.name,
-        savedName: savedFileName,
-        type: file.mimetype,
+        savedAs: savedFileName,
+        mimeType: file.mimetype,
         size: file.size
     });
 
     return data;
 }
 
+module.exports.deleteFile = async function (filePath) {
+    fs.unlinkSync(path.join(config.uploads, filePath));
+}
+
 module.exports.saveFile = saveFile;
 
-module.exports.existFile = function(fileName) {
+//Esta function busca en la carpeta uploads haber si existe el fichero nombre fileName
+module.exports.existFile = function (fileName) {
     return fs.existsSync(path.join(config.uploads, fileName))
 }
 
@@ -39,6 +47,12 @@ module.exports.removeUploads = async () => {
     });
 }
 
+function isImage(filePath) {
+
+    var allowedExtensions = /.(jpg|jpeg|png|gif)$/i;
+    return allowedExtensions.test(path.extname(filePath));
+}
+
 function getUniqueId() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
@@ -47,3 +61,4 @@ function getUniqueId() {
 }
 
 exports.saveFile = saveFile;
+exports.isImage = isImage
