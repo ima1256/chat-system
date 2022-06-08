@@ -1,5 +1,6 @@
 {
     "uploads": "/home/imanol/Escritorio/chat-system/uploads",
+    "test": "/home/imanol/Escritorio/chat-system/test",
     "tests": {
         "user": {
             "prepared": [

@@ -1,7 +1,5 @@
 //sudo systemctl start mongod
 //Models 
-const message = require('./message');
-const user = require('./user');
 
 const mongoose = require('mongoose');
 require('dotenv').config();

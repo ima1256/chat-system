@@ -29,6 +29,8 @@ app.use(fileUpload({ createParentPath: true }));  // enable files upload
 app.get('/user/:id', userController.getUser);
 app.post('/user', userController.createUser);
 app.put('/user/:id', userController.updateUser);
+app.put('/user/:id/addFriendUser/:friendId', userController.addFriendUser);
+app.put('/user/:id/removeFriendUser/:friendId', userController.removeFriendUser);
 app.delete('/user/:id', userController.deleteUser);
 
 //Server

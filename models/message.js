@@ -2,20 +2,28 @@ const mongoose = require('mongoose');
 
 const messageSchema = new mongoose.Schema({
     text: String,   //Text of the message
-    files: [Object], //Path to the files of the message or empty array
+    files:  {
+        type: [Object],
+        default: undefined,
+        required: function () {
+            return this.text === undefined;
+        }
+    }, 
     type: {
         type: String,
         enum: ['server', 'direct'],
         default: 'server'
     },
-    server: {
-        type: String,
+    channel: {
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'Channel',
         required: true
-    },  //Id of the server
+    }, 
     user: {
-        type: String,
+        type: mongoose.SchemaTypes.ObjectId,
+        ref: 'users',
         required: true
-    } //Id of the user that send the message
+    } 
 });
 
 const Message = mongoose.model('Message', messageSchema);

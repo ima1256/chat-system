@@ -39,11 +39,11 @@ async function updateUser(id, usr) {
         if (usr.avatar) {
             let error = user.checkAvatar(usr.avatar.name);
             if (error != undefined) throw { errors: { avatar: error } };
-            else usr_.avatar = await saveFile(usr.avatar)[0];
+            else usr_.avatar = (await saveFile(usr.avatar))[0].savedAs;
         }
 
         user = await User.findByIdAndUpdate(id, usr_, { new: true })
-            .populate('servers').populate('friends').exec();
+        .populate('servers').populate('friends').exec();
 
         return user;
     } catch (err) { console.log(err) }
@@ -68,6 +68,10 @@ async function addFriendUser(id, friendId) {
     friend.markModified('friends');
     await user.save();
     await friend.save();
+
+    user = await User.findById(id).
+    populate('servers').populate('friends').exec();
+
     return user;
 }
 
@@ -79,15 +83,20 @@ async function removeFriendUser(id, friendId) {
 
     let friend = await User.findById(friendId).exec();
 
-    if (!friend) throw { errors: { secondUserNotFound: 'the user dont exist' } }
+    if (!friend) throw { errors: { secondUserNotFound: 'the user dont exist' } };
 
-    _.remove(user.friends, (value) => value.equals(friend._id));
+    let removed = _.remove(user.friends, (value) => value.equals(friend._id));
+    if (removed.length == 0) throw {errors: { notFriends: 'the pair of users are not friends'}};
     _.remove(friend.friends, (value) => value.equals(user._id));
 
     user.markModified('friends');
     friend.markModified('friends');
     await user.save();
     await friend.save();
+
+    user = await User.findById(id).
+    populate('servers').populate('friends').exec();
+
     return user;
 }
 

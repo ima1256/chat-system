@@ -15,6 +15,8 @@ const correct = config.tests.user.correct;
 
 const _ = require('lodash');
 
+const User = require('../models/user');
+
 jest.setTimeout(999999);
 
 const url = 'http://localhost:3000/user';
@@ -36,6 +38,252 @@ const getFields = (({ name, email, avatar }) => {
     if (avatar != undefined) return { name, email, avatar };
     return { name, email };
 });
+
+let ISEValidator = (err) => {
+    expect(err.response).toBeDefined();
+    expect(err.response.status).toBe(500);
+    expect(err.response.data.error).toBeDefined();
+}
+
+let checkUser = async (user, restUser) => {
+    expect(user.password == restUser.password || await bcryptjs.compare(user.password, restUser.password)).toBe(true);
+    expect(getFields(user)).toMatchObject(getFields(restUser));
+    expect(restUser._id).toBe(user.id);
+}
+
+describe('\naddFriendUser', () => {
+
+    beforeAll(async () => {
+        await db.connect();
+        await db.clearDatabase();
+    })
+    afterEach(async () => {
+        await db.clearDatabase();
+    })
+    afterAll(async () => {
+        await db.closeDatabase();
+    })
+
+    let getRoute = (id, friendId) => ['user', id, 'addFriendUser', friendId].join('/');
+
+    it('add friend to a user correct', async () => {
+
+        let user = new User(preparedUsers[0]); await user.save();
+        let friend = new User(preparedUsers[1]); await friend.save();
+
+        let res = await axi.put(getRoute(user.id, friend.id));
+
+        let restUser = res.data.data;
+        let restFriend = _.last(res.data.data.friends);
+
+        await checkUser(user, restUser);
+        await checkUser(friend, restFriend);
+
+        
+        friend = await User.findById(friend.id).exec();
+        expect(_.last(friend.friends).equals(user._id)).toBe(true);
+     
+    })
+
+    it('add friend to a user which is already a friend', async () => {
+
+        try {
+
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+    
+            let res = await axi.put(getRoute(user.id, friend.id));
+
+        } catch(err) {
+            ISEValidator(err);
+            expect(err.response.data.error.friends).toBeDefined();
+        }
+
+
+    })
+
+    it('add friend to a non existing user', async () => {
+
+        try {
+
+            let user = new User(preparedUsers[0]); await user.save();
+            await User.findByIdAndDelete(user._id);
+            let friend = new User(preparedUsers[1]); await friend.save();
+            let res = await axi.put(getRoute(user.id, friend.id));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(404);
+            expect(err.response.data.error.mainUserNotFound).toBeDefined();
+        }
+
+    })
+
+    it('add non existing friend to a user', async () => {
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await User.findByIdAndDelete(friend._id);
+            await axi.put(getRoute(user.id, friend.id));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(404);
+            expect(err.response.data.error.secondUserNotFound).toBeDefined();
+        }
+
+    })
+
+    it('add friend to a user sending non valid objectid', async () => {
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await axi.put(getRoute(user.id, friend.id + 'dfasdfa'));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(400);
+            console.log(err);
+        }
+
+        await db.clearDatabase();
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await axi.put(getRoute(user.id + 'dafdafa', friend.id));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(400);
+            console.log(err);
+        }
+
+    })
+
+})
+
+describe.only('\nremoveFriendUser', () => {
+
+    beforeAll(async () => {
+        await db.connect();
+        await db.clearDatabase();
+    })
+    afterEach(async () => {
+        await db.clearDatabase();
+    })
+    afterAll(async () => {
+        await db.closeDatabase();
+    })
+
+    let getRoute = (id, friendId) => ['user', id, 'removeFriendUser', friendId].join('/');
+
+
+
+    it('remove friend from a user correct', async () => {
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+
+            await userService.addFriendUser(user._id, friend._id);
+
+            let res = await axi.put(getRoute(user.id, friend.id));
+
+            let restUser = res.data.data;
+
+            expect(res.status).toBe(200);
+            checkUser(user, restUser);
+            expect(!restUser.friends.find(elem =>  elem._id == friend.id)).toBe(true);
+            
+            let newUser = await User.findById(user._id).exec();
+            let newFriend = await User.findById(friend._id).exec();
+
+            expect(newFriend.friends.find(elem => elem.equals(user._id))).toBe(undefined);
+            expect(newUser.friends.find(elem => elem.equals(friend._id))).toBe(undefined);
+
+        } catch(err) {console.log(err)}
+
+    })
+
+    it('remove a friend from a user which is not friend', async () => {
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+
+            await userService.addFriendUser(user._id, friend._id);
+            await userService.removeFriendUser(user._id, friend._id);
+
+            let res = await axi.put(getRoute(user.id, friend.id));
+
+            throw {};
+        } catch(err) {
+            ISEValidator(err);
+            expect(err.response.data.error.notFriends).toBeDefined();
+        }
+
+    })
+
+    it('remove friend to a non existing user', async () => {
+        try {
+
+            let user = new User(preparedUsers[0]); await user.save();
+            await User.findByIdAndDelete(user._id);
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await axi.put(getRoute(user.id, friend.id));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(404);
+            expect(err.response.data.error.mainUserNotFound).toBeDefined();
+        }
+    })
+
+    it('remove non existing friend to a user', async () => {
+        try {
+
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await User.findByIdAndDelete(friend._id);
+            let res = await axi.put(getRoute(user.id, friend.id));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(404);
+            expect(err.response.data.error.secondUserNotFound).toBeDefined();
+        }
+    })
+
+    it('remove friend to a user sending non valid objectid', async () => {
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await axi.put(getRoute(user.id, friend.id + 'dfasdfa'));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(400);
+        }
+
+        await db.clearDatabase();
+
+        try {
+            let user = new User(preparedUsers[0]); await user.save();
+            let friend = new User(preparedUsers[1]); await friend.save();
+            await axi.put(getRoute(user.id + 'dsfasdf', friend.id));
+            throw {};
+        } catch(err) {
+            expect(err.response).toBeDefined();
+            expect(err.response.status).toBe(400);
+        }
+
+    })
+
+})
 
 describe('\nupdateUser', () => {
 
@@ -70,17 +318,30 @@ describe('\nupdateUser', () => {
         expect(res.data.data.password).toBe(correct.passwords[0]);
     })
 
-    it.only('avatar of a user correct', async () => {
+    it('avatar of a user correct with .jpg format', async () => {
         let user = await userService.createUser(preparedUsers[1]);
         let form = new FormData();
         form.append('avatar', fs.createReadStream(path.join(config.uploads, correct.avatars[0])));
         let res = await axi.put('user/' + user.id, form);
-
-        console.log(res);
         expect(res.data.data.avatar).toBeDefined();
-        expect(res.data.data.avatar.name).toBe(correct.avatars[0]);
-        expect(path.extname(res.data.data.avatar.savedAs)).toBe('jpg')
-        expect(res.data.data.avatar.mimeType).toBe(path.extname(correct.avatars[0]));
+        expect(path.extname(res.data.data.avatar)).toBe('.jpg');
+        //expect(res.data.data.avatar.mimeType).toBe(path.extname(correct.avatars[0]));
+    })
+
+    const fs = require('fs');
+
+    it('avatar of a user correct with .gif format', async () => {
+        let user = await userService.createUser(preparedUsers[1]);
+        let form = new FormData();
+        form.append('avatar', fs.createReadStream(path.join(config.test, 'prueba.gif')));
+        let res = await axi.put('user/' + user.id, form);
+        expect(res.data.data.avatar).toBeDefined();
+        expect(path.extname(res.data.data.avatar)).toBe('.jpg');
+        expect(
+            fs.existsSync(
+                path.join(config.uploads, 
+                    res.data.data.avatar.split('.').slice(0, -1).join('.') + '.gif')))
+        //expect(res.data.data.avatar.mimeType).toBe(path.extname(correct.avatars[0]));
     })
 
     it('name of a user incorrect', async () => {
@@ -136,12 +397,6 @@ describe('\nupdateUser', () => {
         await axi.put('user/' + user.id, form, {validateStatus: status => status == 400});
       
     })
-
-    let ISEValidator = (err) => {
-        expect(err.response).toBeDefined();
-        expect(err.response.status).toBe(500);
-        expect(err.response.data.error).toBeDefined();
-    }
 
     it('invalid avatar format .pdf for avatar field', async () => {
 
@@ -304,7 +559,7 @@ describe('\ngetUser', () => {
 
 })
 
-describe('createUser', () => {
+describe('\ncreateUser', () => {
 
     beforeAll(async () => {
         await db.connect();

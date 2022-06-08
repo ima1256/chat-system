@@ -47,7 +47,89 @@ const requestValidators = {
         {
             validator: (req) => !req.files || Object.keys(req.files).every(val => User.getRequiredPaths().files.includes(val))
         }
+    ],
+    addFriendUser: [
+        {
+            validator: (req) => validator.isMongoId(req.params.friendId)
+        },
+        {
+            validator: (req) => !req.files && _.isEqual(req.body, {}) && _.isEqual(req.query, {})
+        },
+        {
+            validator: (req) => validator.isMongoId(req.params.id)
+        }
+    ],
+    removeFriendUser: [
+        {
+            validator: (req) => validator.isMongoId(req.params.friendId)
+        },
+        {
+            validator: (req) => !req.files && _.isEqual(req.body, {}) && _.isEqual(req.query, {})
+        },
+        {
+            validator: (req) => validator.isMongoId(req.params.id)
+        }
     ]
+}
+
+async function removeServerUser(req, res) {
+
+    try {
+
+        if (!requestValidators.removeServerUser.every(validate => validate.validator(req)))
+            return res.status(400).json(getResponse('user', 400));
+
+        const serverId = req.params.serverId;
+        const userId = req.params.id;
+
+        //let user = await userService.removeServerUser(userId, serverId);
+
+        return res.status(200).json(getResponse('user', 200, user));
+
+    } catch(err) {
+        if (err.errors && (err.errors.mainUserNotFound || err.errors.serverNotFound)) return res.status(404).json(getResponse('user', 404, undefined, err));
+        else return res.status(500).json(getResponse('user', 500, undefined, err));
+    }
+
+}
+
+async function removeFriendUser(req, res) {
+    try {
+        if (!requestValidators.removeFriendUser.every(validate => validate.validator(req)))
+            return res.status(400).json(getResponse('user', 400));
+
+        const friendId = req.params.friendId;
+        const userId = req.params.id;
+
+        let user = await userService.removeFriendUser(userId, friendId);
+
+        return res.status(200).json(getResponse('user', 200, user));
+
+    } catch (err) {
+        //Si no encontramos al usuario mandamos un 404
+        if (err.errors && (err.errors.mainUserNotFound || err.errors.secondUserNotFound)) return res.status(404).json(getResponse('user', 404, undefined, err));
+        else return res.status(500).json(getResponse('user', 500, undefined, err));
+    }
+}
+
+async function addFriendUser(req, res) {
+
+    try {
+        if (!requestValidators.addFriendUser.every(validate => validate.validator(req)))
+            return res.status(400).json(getResponse('user', 400));
+
+        const friendId = req.params.friendId;
+        const userId = req.params.id;
+
+        let user = await userService.addFriendUser(userId, friendId);
+
+        return res.status(200).json(getResponse('user', 200, user));
+    } catch (err) {
+        //Si no encontramos al usuario mandamos un 404
+        if (err.errors && (err.errors.mainUserNotFound || err.errors.secondUserNotFound)) return res.status(404).json(getResponse('user', 404, undefined, err));
+        else return res.status(500).json(getResponse('user', 500, undefined, err));
+    }
+
 }
 
 async function updateUser(req, res) {
@@ -58,7 +140,7 @@ async function updateUser(req, res) {
             return res.status(400).json(getResponse('user', 400));
 
         const id = req.params.id;
-        let user = {...req.body};
+        let user = { ...req.body };
 
 
         if (req.files) user.avatar = req.files.avatar;
@@ -134,7 +216,9 @@ module.exports = {
     createUser,
     getUser,
     deleteUser,
-    updateUser
+    updateUser,
+    addFriendUser,
+    removeFriendUser
 };
 exports.createUser = createUser;
 exports.getUser = getUser

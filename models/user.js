@@ -63,7 +63,8 @@ UserSchema.add({
   },
   friends: {
     type: [{
-      type: mongoose.SchemaTypes.ObjectId
+      type: mongoose.SchemaTypes.ObjectId,
+      ref: 'users'
     }],
     validate: (newArray) => {
       if (newArray.length == 0) return true;

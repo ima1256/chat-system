@@ -1,14 +1,28 @@
 const path = require('path');
 const fs = require('fs');
 const config = require('../config.json');
+const Jimp = require('jimp');
 
 async function saveFile(file, data = []) {
 
     //Here we give a unique id with its extension to the file saved in uploads dir
     let savedFileName = getUniqueId();
-    
+
     if (!isImage(file.name)) savedFileName += path.extname(file.name);
-    else savedFileName += '.jpg';
+    else {
+        if (path.extname(file.name) != '.jpg') {
+            let oldFilePath = path.join(config.uploads, savedFileName + path.extname(file.name));
+            await file.mv(oldFilePath);
+            let oldFile = await Jimp.read(oldFilePath);
+            oldFile
+            .resize(256, 256) // resize
+            .quality(60) // set JPEG quality
+            .greyscale() // set greyscale
+            .write(path.join(config.uploads, savedFileName + '.jpg')); // save
+            fs.unlinkSync(oldFilePath);
+        } 
+        savedFileName += '.jpg';
+    } 
 
     //move photo to uploads directory
     file.mv(path.join(config.uploads, savedFileName));
@@ -23,6 +37,18 @@ async function saveFile(file, data = []) {
 
     return data;
 }
+
+/*Jimp.read('lenna.png')
+    .then(lenna => {
+        return lenna
+            .resize(256, 256) // resize
+            .quality(60) // set JPEG quality
+            .greyscale() // set greyscale
+            .write('lena-small-bw.jpg'); // save
+    })
+    .catch(err => {
+        console.error(err);
+    });*/
 
 module.exports.deleteFile = async function (filePath) {
     fs.unlinkSync(path.join(config.uploads, filePath));
