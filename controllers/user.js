@@ -142,7 +142,6 @@ async function updateUser(req, res) {
         const id = req.params.id;
         let user = { ...req.body };
 
-
         if (req.files) user.avatar = req.files.avatar;
         user = await userService.updateUser(id, user);
 

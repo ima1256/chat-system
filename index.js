@@ -10,9 +10,9 @@ const path = require('path');
 //Constants
 const port = process.env.PORT;
 const hostname = process.env.HOST;
-const messageManager = require('./controllers/message');
+const messageController = require('./controllers/message');
 const userController = require('./controllers/user');
-const serverManager = require('./controllers/server');
+const serverController = require('./controllers/server');
 
 //Middleweres
 app.use(cors());
@@ -34,16 +34,16 @@ app.put('/user/:id/removeFriendUser/:friendId', userController.removeFriendUser)
 app.delete('/user/:id', userController.deleteUser);
 
 //Server
-app.get('/server/:id', serverManager.getServer);
-app.post('/server', serverManager.createServer);
-app.put('/server/:id', serverManager.updateServer);
-app.delete('/server/:id', serverManager.deleteServer);
+app.get('/server/:id', serverController.getServer);
+app.post('/server', serverController.createServer);
+app.put('/server/:id/:operation', serverController.updateServer);
+app.delete('/server/:id', serverController.deleteServer);
 
 //Message
-app.get('/message/:id', messageManager.getMessage);
-app.post('/message', messageManager.createMessage);
-app.put('/message/:id', messageManager.updateMessage);
-app.delete('/message/:id', messageManager.deleteMessage);
+app.get('/message/:id', messageController.getMessage);
+app.post('/message', messageController.createMessage);
+app.put('/message/:id', messageController.updateMessage);
+app.delete('/message/:id', messageController.deleteMessage);
 
 
 //Sockets para mensajes de chat

@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --testEnvironment=node ./controllers/user.test.js --watch",
+    "test": "jest --testEnvironment=node --watch ./controllers/server.test.js",
     "start": "nodemon index.js --trace-warnings --ignore 'uploads/*'"
   },
   "author": "",

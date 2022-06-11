@@ -2,48 +2,121 @@ const Server = require('../models/server');
 
 const User = require('../models/user');
 const _ = require('lodash');
-const Server = require('../models/server');
 const Channel = require('../models/channel');
-const {saveFile, existFile} = require('../utils/files');
+const { saveFile, existFile, isImage } = require('../utils/files');
 
-async function getServer(id) {
-    let server = await Server.findById(id);
-    if (!server) throw {errors: {serverNotFound: 'No se ha encontrado el servidor'}}
-    return server;
+function myFindById(id) {
+    return Server.findById(id)
+    .populate('creator', 'name id')
+    .populate('members', 'name id')
+    .populate('moderators', 'name id')
+    .populate('textChannels', 'name').exec();
 }
 
 async function createServer(srv) {
 
-    let server = {...srv};
+    let server = new Server({ ...srv });
 
-    //Buscar el usuario creador y comprobar si existe
     let creator = await User.findById(server.creator).exec();
-    if (!creator) throw {errors: {mainUserNotFound: 'El usuario no existe'}}
-    server._id = creator._id;
-
-    //Crear un canal de texto, por defecto los canales son de texto
-    let defaultTextChannel = new Channel({name: 'canal de texto', server: server._id});
-    server.textChannels = [defaultTextChannel];
-
-    //Instanciar el servidor
-    server = new Server(server);
-    
-    //Añadir al creador como moderador y como miembro del servidor
-    //Esto se hace automaticamente en el esquema mongoose
+    if (!creator) throw { errors: { mainUserNotFound: 'El usuario no existe' } }
+    server.creator = creator._id;
 
     await server.save();
-    await defaultTextChannel.save();
+    server = await myFindById(server._id).exec();
+
+    return server.toObject();
+
 }
 
+async function getServer(id) {
+
+    let server = await myFindById(id);
+
+    if (!server) throw {errors: {serverNotFound: 'El servidor no se ha encontrado'}}
+    return server.toObject();
+
+}
+
+/*
+.populate('creator', 'name id')
+    .populate('members', 'name id')
+    .populate('moderators', 'name id')
+    .populate('textChannels', 'name')
+    .populate('commands', 'name').exec();
+*/
+
+async function updateServer(srv) {
+
+    let server = await Server.findById(srv.id);
+
+    if (!server) throw {errors: {serverNotFound: 'El servidor no se ha encontrado'}}
+
+    if (srv.operation) {
+    
+        switch (srv.operation){
+            case 'addTextChannel':
+                server = await server.addTextChannel(srv.update.name); 
+                break;
+            case 'removeTextChannel':
+                server = await server.removeTextChannel(srv.update.name); 
+                break;
+            case 'addMember':
+                server = await server.addMember(srv.update.id); 
+                break;
+            case 'removeMember':
+                server = await server.removeMember(srv.update.id); 
+                break;
+            case 'addModerator':
+                server = await server.addModerator(srv.update.id); 
+                break;
+            case 'removeModerator':
+                server = await server.removeModerator(srv.update.id); 
+                break;
+            case 'addCommand':
+                server = await server.addCommand(srv.update.name, srv.update.params);
+                break;
+            case 'removeCommand':
+                server = await server.removeCommand(srv.update.name); 
+                break;
+            default: 
+                server = await server.update(srv.update);
+                break;
+        }
+        
+    }
+
+    server = await myFindById(server.id);
+
+    return server.toObject();
+
+}
+
+async function deleteServer(id) {
+    let server = await Server.findById(id)
+    .populate('textChannels')
+    .populate('commands').exec();
+
+    if (!server) throw {errors: {serverNotFound: 'El servidor no se ha encontrado'}}
+
+
+    let toDeletes = ['commands', 'textChannels'];
+
+    for (const toDelete of toDeletes) {
+        for(let elem of server[toDelete] || []) {
+            await elem.remove();
+        }
+    }
+
+    await server.remove();
+    //server = await server.findById(server.id);
+    return {};
+}
+
+
 module.exports = {
-    getServer,
     createServer,
+    getServer,
     updateServer,
     deleteServer,
-    addMemberServer,
-    removeMemberServer,
-    addModeratorServer,
-    removeModeratorServer,
-    addTextChannel,
-    removeTextChannel
+    myFindById
 }

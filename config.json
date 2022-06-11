@@ -90,14 +90,50 @@
             "correct": {}
         },
         "models": {},
-        "services": {
-            "getUser": {},
-            "createUser": {},
-            "updateUser": {},
-            "deleteUser": {}
+        "testNames": {
+            "getServer": [
+                "get a server with a correct id and all data that the model can store", 
+                "get a server with invalid id",
+                "get a server with an id that do not exist in db"
+            ],
+            "createServer": [
+                "create a server with required data",
+                "save a server with an avatar that exist",
+                "save a server with an avatar that dont exist"
+            ],
+            "updateServer": {
+                "0": "save a server and append a new textChannel",
+                "1": "remove a textChannel from server",
+                "2": "save a server and add a new command",
+                "3": "save a server and remove a command",
+                "4": "save a server and append a new moderator",
+                "5": "save a server and remove a moderator",
+                "6": "save a server and append a new member",
+                "7": "save a server and remove a member",
+                "8": "save a server and try to remove a command do not exist",
+                "9": "save a server and try to remove a textChannel do not exist",
+                "10": "save a server and try to remove a moderator do not exist",
+                "11": "save a server and try to remove a member do not exist",
+                "12": "save a server and try to remove a moderator that do exist but is not server moderator",
+                "13": "save a server and try to remove a member that do exist but is not member of the server",
+                "14": "try to remove a command when there are no commands in server",
+                "15": "try to remove a textChannel when there are no commands in server",
+                "16": "try to remove a member when there are no commands in server",
+                "17": "try to remove a moderator when there are no commands in server"
+            },
+            "deleteServer": [
+                "delete a server that exist",
+                "delete a server that do not exist",
+                "delete a server passing an invalid id"
+            ],
+            "all": [
+                "try to make the operation sending invalid structured data"
+            ]
+
         }
     },
     "routes": {
-        "user": "user"
+        "user": "user",
+        "avatar": "avatar"
     }
 }

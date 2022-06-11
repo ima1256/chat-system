@@ -74,7 +74,6 @@ module.exports.removeUploads = async () => {
 }
 
 function isImage(filePath) {
-
     var allowedExtensions = /.(jpg|jpeg|png|gif)$/i;
     return allowedExtensions.test(path.extname(filePath));
 }

@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const nameValidators = [
     {
-        validator: (value) => /^[A-Za-z].*$/.test(value) && value.length >= 3, msg: 'El nombre debe empezar por una letra'
+        validator: (value) => /^[A-Za-z].*$/.test(value), msg: 'El nombre debe empezar por una letra'
     },
     {
         validator: (value) => value.length >= 3, msg: 'El nombre debe tener al menos tres simbolos'
