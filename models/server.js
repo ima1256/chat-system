@@ -116,14 +116,6 @@ serverSchema.pre('validate', { document: true, query: false }, async function (n
 
 const { isImage } = require('../utils/files');
 
-serverSchema.statics.myFindById = async function (id) {
-    /*return await Server.findById(id)
-        .populate('creator', 'name id')
-        .populate('members', 'name id')
-        .populate('moderators', 'name id')
-        .populate('textChannels', 'name');*/
-}
-
 serverSchema.statics.checkAvatar = function (avatar) {
     let error = !isImage(avatar) ? new Error('El avatar debe de ser una imagen') : undefined;
     return error;
@@ -206,12 +198,14 @@ serverSchema.methods.removeTextChannel = async function (name) {
 
     let textChannel = (await Channel.findOne({ name: name, server: server._id }).exec());
 
-    if (textChannel.length == 0) throw { errors: { textChannelNotFound: 'El canal no se ha encontrado' } };
+    if (!textChannel) throw { errors: { textChannelNotFound: 'El canal no se ha encontrado' } };
 
     _.remove(server.textChannels, id => {
         let equal = id.equals(textChannel._id);
         return equal;
     });
+
+    await textChannel.remove();
     server.markModified('textChannels');
     return await server.save();
 }
@@ -226,8 +220,7 @@ serverSchema.methods.addMember = async function (id) {
     server.members.push(member._id);
 
     server.markModified('members');
-    await server.save();
-
+    return await server.save();
 }
 
 serverSchema.methods.removeMember = async function (id) {
@@ -236,21 +229,20 @@ serverSchema.methods.removeMember = async function (id) {
 
     if (!member) throw { errors: { mainUserNotFound: 'El usuario no se ha encontrado' } };
 
-    member = _.remove(server.members, id => member._id.equals(id));
+    member = _.remove(server.members, id => member._id.equals(id))[0];
 
     if (!member) throw { errors: { memberNotFound: 'El usuario no es miembro del server' } };
-
-    member = _.remove(server.moderators, id => member._id.equals(id));
+    member = _.remove(server.moderators, id => member._id.equals(id))[0];
 
     if (!!member) server.markModified('moderators');
 
     server.markModified('members');
-    await server.save();
-    return server;
+    return await server.save();
 }
 
 serverSchema.methods.addModerator = async function (id) {
     let server = this;
+
     let moderator = await User.findById(id).exec();
 
     if (!moderator) throw { errors: { mainUserNotFound: 'El usuario no se ha encontrado' } };
@@ -267,7 +259,7 @@ serverSchema.methods.removeModerator = async function (id) {
 
     if (!moderator) throw { errors: { mainUserNotFound: 'El usuario no se ha encontrado' } };
 
-    moderator = _.remove(server.moderators, id => moderator._id.equals(id));
+    moderator = _.remove(server.moderators, id => moderator._id.equals(id))[0];
 
     if (!moderator) throw { errors: { moderatorNotFound: 'El usuario no es moderador del server' } };
 
@@ -287,7 +279,7 @@ serverSchema.methods.addCommand = async function (name, parametersAsString='') {
     server.commands.push(command._id);
 
     server.markModified('commands');
-    await server.save();
+    return await server.save();
 }
 
 serverSchema.methods.removeCommand = async function (name) {

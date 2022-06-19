@@ -1,10 +1,10 @@
 const mongoose = require('mongoose');
 const db = require('./db');
-const { saveFile, removeUploads } = require('../utils/files');
-
-const _ = require('lodash');
-
 jest.setTimeout(999999);
+const _ = require('lodash');
+const config = require('../config.json');
+
+const { saveFile, removeUploads } = require('../utils/files');
 
 const {
   getUser,
@@ -16,7 +16,6 @@ const {
 } = require('./user');
 
 const User = require('../models/user');
-const config = require('../config.json');
 
 const validUsers = config.tests.user.prepared;
 const preparedUsers = validUsers;
@@ -45,7 +44,111 @@ let createUsers = async () => {
   return created;
 }
 
-describe.only('\ngetUser', () => {
+const Server = require('../models/server');
+
+const userService = require('./user');
+
+ObjectId = mongoose.Types.ObjectId;
+
+describe.only('\naddServer', () => {
+
+  beforeAll(async () => {
+    await db.connect();
+    await db.clearDatabase();
+  })
+  afterEach(async () => {
+    await db.clearDatabase();
+  })
+  afterAll(async () => {
+    await db.closeDatabase();
+  })
+
+  it('add a server that exist in db to a user that exist', async () => {
+
+    let user = await new User(preparedUsers[0]).save();
+    let server = await new Server({ name: 'myServer', creator: user._id }).save();
+
+    let dbUser = await userService.addServer(user.id, server.id);
+
+    expect(dbUser.servers).toStrictEqual([server._id]);
+    dbUser.servers.pop();
+    expect(dbUser.equals(user)).toBe(true);
+
+  })
+
+  it('add a server that do not exist to a user that exist', async () => {
+
+    try {
+      let user = await User(preparedUsers[0]).save();
+      await userService.addServer(user.id, ObjectId());
+    } catch (err) {
+      //console.log(err);
+      expect(Object.keys(err)).toStrictEqual(['errors']);
+      expect(Object.keys(err.errors)).toStrictEqual(['serverNotFound']);
+    }
+
+  })
+
+  it('add a server that exist to a user that do not exist', async () => {
+
+    try {
+      let user = await User(preparedUsers[0]).save();
+      let server = await Server({ name: 'myserver', creator: user._id }).save();
+      await userService.addServer(ObjectId().toString(), server.id);
+    } catch (err) {
+      //console.log(err);
+      expect(Object.keys(err)).toStrictEqual(['errors']);
+      expect(Object.keys(err.errors)).toStrictEqual(['mainUserNotFound']);
+    }
+
+  })
+
+  it('add a server that do not exist a user that do not exist', async () => {
+
+    try {
+
+      await userService.addServer(ObjectId().toString(), ObjectId().toString());
+    } catch (err) {
+      //console.log(err);
+      expect(Object.keys(err)).toStrictEqual(['errors']);
+      expect(Object.keys(err.errors)).toStrictEqual(['mainUserNotFound']);
+    }
+
+  })
+
+  it('add a server to user which is already a server in user servers list', async () => {
+
+    try {
+      let user = await User(preparedUsers[0]).save();
+      let server = await Server({ name: 'myserver', creator: user._id }).save();
+      await userService.addServer(user.id, server.id);
+      await userService.addServer(user.id, server.id);
+    } catch (err) {
+
+      expect(Object.keys(err)).toStrictEqual(['errors']);
+      expect(Object.keys(err.errors)).toStrictEqual(['serverAlready']);
+    }
+
+  })
+
+  it('add multiple servers to a user', async () => {
+
+    let user = await User(preparedUsers[0]).save();
+    let server = await Server({ name: 'myserver', creator: user._id }).save();
+    let user2 = await User(preparedUsers[1]).save();
+    let server2 = await Server({ name: 'myserver2', creator: user2._id }).save();
+    await userService.addServer(user.id, server.id);
+    let dbUser = await userService.addServer(user.id, server2.id);
+
+    expect(dbUser.servers).toStrictEqual([server._id, server2._id]);
+    dbUser.servers = [];
+    expect(user.equals(dbUser));
+
+  })
+
+})
+
+describe('\ngetUser', () => {
 
   beforeAll(async () => {
     await db.connect();
@@ -83,31 +186,31 @@ describe.only('\ngetUser', () => {
   it('get a user with an existing id with friends', async () => {
 
 
-      let created = await createUsers();
-      let user = created[0];
+    let created = await createUsers();
+    let user = created[0];
 
 
-      await addFriendUser(user._id, created[1]._id);
-      user = await addFriendUser(user._id, created[2]._id);
+    await addFriendUser(user._id, created[1]._id);
+    user = await addFriendUser(user._id, created[2]._id);
 
-      let friends = [await getUser(created[1]._id), await getUser(created[2]._id)];
+    let friends = [await getUser(created[1]._id), await getUser(created[2]._id)];
 
-      expect(friends.length == user.friends.length).toBe(true);
+    expect(friends.length == user.friends.length).toBe(true);
 
-      for (const i in friends) {
-        expect(friends[i]._id.equals(user.friends[i]._id));
-      
-      }
+    for (const i in friends) {
+      expect(friends[i]._id.equals(user.friends[i]._id));
 
-      let preparedUser = preparedUsers[0];
+    }
 
-      Object.keys(User.schema.tree).forEach(function (path) {
-        if (!['id', '_id', '__v'].includes(path) && !Object.keys(preparedUser).includes(path))
-          if (path != 'servers' && path != 'friends')
-            expect(user[path]).toBeUndefined();
-          else if (path == 'servers')
-            expect(user[path]).toStrictEqual([]);
-      });
+    let preparedUser = preparedUsers[0];
+
+    Object.keys(User.schema.tree).forEach(function (path) {
+      if (!['id', '_id', '__v'].includes(path) && !Object.keys(preparedUser).includes(path))
+        if (path != 'servers' && path != 'friends')
+          expect(user[path]).toBeUndefined();
+        else if (path == 'servers')
+          expect(user[path]).toStrictEqual([]);
+    });
 
   })
 
@@ -580,7 +683,7 @@ describe('\ndeleteUser', () => {
     try {
       postUser = await deleteUser(preUser._id);
       throw {};
-    } catch(err) {
+    } catch (err) {
       expect(err.errors).toBeDefined();
       expect(err.errors.mainUserNotFound).toBeDefined();
     }

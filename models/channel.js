@@ -29,6 +29,47 @@ const channelSchema = new mongoose.Schema({
     }
 })
 
+const Message = require('./message');
+const _ = require('lodash');
+
+channelSchema.statics.getMaxQuery = function () {
+    return 50;
+}
+
+//channelSchema.methods.addMessage = async function()
+
+channelSchema.methods.getMessages = async function (numMessages) {
+
+    let channel = this;
+
+    let messages = await Message.find({ channel: channel._id })
+        .sort({ _id: - 1 })
+        .limit(numMessages).exec();
+
+    return messages;
+
+}
+
+
+channelSchema.methods.addMessage = async function (message) {
+
+    await new Message(message).save();
+
+    return this;
+
+}
+
+channelSchema.methods.equals = function (otherChannel) {
+    let paths = { ...channelSchema.paths };
+    delete paths['__v'];
+    for (const path of Object.keys(paths)) {
+        if (!_.isEqual(this[path], otherChannel[path])) {
+            throw { errors: { objectsNotSame: `Channels are not the same in path ${path}\n ${this[path]} \n ${otherChannel[path]}` } }
+        }
+    }
+    return true;
+}
+
 const Channel = mongoose.model('Channel', channelSchema);
 
 module.exports = Channel;

@@ -117,9 +117,9 @@
                 "12": "save a server and try to remove a moderator that do exist but is not server moderator",
                 "13": "save a server and try to remove a member that do exist but is not member of the server",
                 "14": "try to remove a command when there are no commands in server",
-                "15": "try to remove a textChannel when there are no commands in server",
-                "16": "try to remove a member when there are no commands in server",
-                "17": "try to remove a moderator when there are no commands in server"
+                "15": "try to remove a textChannel when there are no textChannels in server",
+                "16": "try to remove a member when there are no members in server",
+                "17": "try to remove a moderator when there are no moderators in server"
             },
             "deleteServer": [
                 "delete a server that exist",

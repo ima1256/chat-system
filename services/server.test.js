@@ -114,7 +114,6 @@ describe('\ncreateServer', () => {
 
         } catch (err) {
 
-           
             expect(err.errors.mainUserNotFound).toBeDefined();
             
         }

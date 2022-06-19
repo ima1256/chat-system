@@ -45,240 +45,639 @@ let ISEValidator = (err) => {
     expect(err.response.data.error).toBeDefined();
 }
 
+let NFValidator = (err) => {
+    expect(err.response).toBeDefined();
+    expect(err.response.status).toBe(404);
+    expect(err.response.data.error).toBeDefined();
+}
+
+let checkFailFields = (err, flds) => {
+    let fields = flds.split(' ');
+    expect(err.error).toBeDefined();
+    for (let field of fields) {
+        expect(err.error[field]).toBeDefined();
+    }
+    expect(Object.keys(err.error)).toHaveLength(fields.length);
+}
+
 let checkUser = async (user, restUser) => {
     expect(user.password == restUser.password || await bcryptjs.compare(user.password, restUser.password)).toBe(true);
     expect(getFields(user)).toMatchObject(getFields(restUser));
     expect(restUser._id).toBe(user.id);
 }
 
-describe('\naddFriendUser', () => {
+const BRValidator = (err) => {
 
-    beforeAll(async () => {
-        await db.connect();
-        await db.clearDatabase();
+    expect(err.response).toBeDefined();
+    expect(err.response.status).toBe(400);
+    expect(Object.keys(err.response.data)).toStrictEqual(['message']);
+
+}
+
+beforeAll(async () => {
+    await db.connect();
+    await db.clearDatabase();
+})
+afterEach(async () => {
+    await db.clearDatabase();
+})
+afterAll(async () => {
+    await db.closeDatabase();
+})
+
+const mongoose = require('mongoose');
+const Server = require('../models/server');
+const ObjectId = mongoose.Types.ObjectId;
+const userController = require('./user');
+
+describe('\nremoveServer', () => {
+
+    const getRoute = (user, server) => ['user', user.id, 'removeServer', server.id].join('/');
+
+    it('remove a user server to a user that exist', async () => {
+
+        let user = await new User(preparedUsers[0]).save();
+        let server = await new Server({ name: 'myServer', creator: user._id }).save();
+        await user.addServer(server.id);
+
+        let preUser = (await userController.myFindById(user.id).exec()).toObject();
+        let res = await axi.put(getRoute(user, server)); let dbUser = res.data.data;
+
+        expect(res.status).toBe(200);
+        expect(res.data.error).toBeUndefined();
+        expect(dbUser.servers).toBeUndefined();
+        delete preUser.servers;
+        expect(_.isEqual(dbUser, preUser)).toBe(true);
+
+
     })
-    afterEach(async () => {
-        await db.clearDatabase();
-    })
-    afterAll(async () => {
-        await db.closeDatabase();
-    })
 
-    let getRoute = (id, friendId) => ['user', id, 'addFriendUser', friendId].join('/');
+    it('remove a server that do not exist to a user that exist', async () => {
 
-    it('add friend to a user correct', async () => {
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let fakeId = ObjectId().toString();
+            let route = getRoute(user, {id: fakeId});
+            await axi.put(route);
+            throw {};
+        } catch (err) {
+            NFValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['serverNotFound']);
+        }
 
-        let user = new User(preparedUsers[0]); await user.save();
-        let friend = new User(preparedUsers[1]); await friend.save();
-
-        let res = await axi.put(getRoute(user.id, friend.id));
-
-        let restUser = res.data.data;
-        let restFriend = _.last(res.data.data.friends);
-
-        await checkUser(user, restUser);
-        await checkUser(friend, restFriend);
-
-        
-        friend = await User.findById(friend.id).exec();
-        expect(_.last(friend.friends).equals(user._id)).toBe(true);
-     
     })
 
-    it('add friend to a user which is already a friend', async () => {
+    it('remove a server that exist to a user that do not exist', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute({id: ObjectId().toString()}, server));
+            throw {};
+        } catch (err) {
+            //console.log(err);
+            NFValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['mainUserNotFound']);
+        }
+
+    })
+
+    it('remove a server that do not exist a user that do not exist', async () => {
 
         try {
 
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-    
-            let res = await axi.put(getRoute(user.id, friend.id));
+            await axi.put(getRoute({id: ObjectId().toString()}, {id: ObjectId().toString()}));
+            throw {};
+        } catch (err) {
+            //console.log(err);
+            NFValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['mainUserNotFound']);
+        }
 
-        } catch(err) {
+    })
+
+    it('remove a server to user which is not a server in user servers list', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute(user, server));
+            throw {};
+        } catch (err) {
             ISEValidator(err);
-            expect(err.response.data.error.friends).toBeDefined();
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['serverNot']);
         }
-
 
     })
 
-    it('add friend to a non existing user', async () => {
+    it('remove multiple servers to a user', async () => {
+
+        let user = await User(preparedUsers[0]).save();
+        let server = await Server({ name: 'myserver', creator: user._id }).save();
+        let user2 = await User(preparedUsers[1]).save();
+        let server2 = await Server({ name: 'myserver2', creator: user2._id }).save();
+        await user.addServer(server.id); await user.addServer(server2.id);
+
+        let preUser = (await userController.myFindById(user.id).exec()).toObject();
+        await axi.put(getRoute(user, server));
+        let res = await axi.put(getRoute(user, server2)); let dbUser = res.data.data;
+
+        expect(dbUser.servers).toBeUndefined();
+        delete preUser.servers;
+        expect(_.isEqual(dbUser, preUser));
+
+    })
+
+    it('try to remove a server that exist to a user that exist sending data in the body', async () => {
 
         try {
-
-            let user = new User(preparedUsers[0]); await user.save();
-            await User.findByIdAndDelete(user._id);
-            let friend = new User(preparedUsers[1]); await friend.save();
-            let res = await axi.put(getRoute(user.id, friend.id));
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute(user, server), {badData: 'Hola que tal'});
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(404);
-            expect(err.response.data.error.mainUserNotFound).toBeDefined();
+        } catch (err) {
+            BRValidator(err);
+            
         }
 
     })
 
-    it('add non existing friend to a user', async () => {
+    it('try to remove a server that exist to a user that exist sending data in the query', async () => {
 
         try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-            await User.findByIdAndDelete(friend._id);
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute(user, server) + '?queryParam=hola');
+            throw {};
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+
+    })
+
+    it('try to remove a server that exist to a user that exist sending data in file format', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+
+            let form = new FormData();
+
+            form.append('avatar', fs.createReadStream(path.join(config.test, incorrect.avatars.incorrect_format[0])));
+            await axi.put(getRoute(user, server), form);
+            throw {};
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+
+    })
+
+    it('try to remove a server that exist to a user that exist sending not mongoId in the params', async () => {
+        
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute({id: 'sddfa'}, server));
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+        
+    })
+
+})
+
+describe('\naddServer', () => {
+
+    const getRoute = (user, server) => ['user', user.id, 'addServer', server.id].join('/');
+
+    let NFValidator = (err) => {
+        expect(err.response).toBeDefined();
+        expect(err.response.status).toBe(404);
+        expect(err.response.data.error).toBeDefined();
+    }
+
+    it('add a server that exist in db to a user that exist', async () => {
+
+
+        let user = await new User(preparedUsers[0]).save();
+        let server = await new Server({ name: 'myServer', creator: user._id }).save();
+
+        let preUser = (await userController.myFindById(user.id).exec()).toObject();
+        let res = await axi.put(getRoute(user, server)); let dbUser = res.data.data;
+
+        expect(res.status).toBe(200);
+        expect(res.data.error).toBeUndefined();
+        expect(dbUser.servers).toStrictEqual([{id: server.id, name: server.name}]);
+        delete dbUser.servers;
+        expect(_.isEqual(dbUser, preUser)).toBe(true);
+
+
+    })
+
+    it('add a server that do not exist to a user that exist', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let fakeId = ObjectId().toString();
+            let route = getRoute(user, {id: fakeId});
+            await axi.put(route);
+        } catch (err) {
+            NFValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['serverNotFound']);
+        }
+
+    })
+
+    it('add a server that exist to a user that do not exist', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute({id: ObjectId().toString()}, server));
+        } catch (err) {
+            //console.log(err);
+            NFValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['mainUserNotFound']);
+        }
+
+    })
+
+    it('add a server that do not exist a user that do not exist', async () => {
+
+        try {
+
+            await axi.put(getRoute({id: ObjectId().toString()}, {id: ObjectId().toString()}));
+        } catch (err) {
+            //console.log(err);
+            NFValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['mainUserNotFound']);
+        }
+
+    })
+
+    it('add a server to user which is already a server in user servers list', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await userService.addServer(user.id, server.id);
+            await axi.put(getRoute(user, server));
+        } catch (err) {
+
+            ISEValidator(err);
+            expect(Object.keys(err.response.data.error)).toStrictEqual(['serverAlready']);
+        }
+
+    })
+
+    it('add multiple servers to a user', async () => {
+
+        let user = await User(preparedUsers[0]).save();
+        let server = await Server({ name: 'myserver', creator: user._id }).save();
+        let user2 = await User(preparedUsers[1]).save();
+        let server2 = await Server({ name: 'myserver2', creator: user2._id }).save();
+
+        let preUser = (await userController.myFindById(user.id).exec()).toObject();
+        await axi.put(getRoute(user, server));
+        let res = await axi.put(getRoute(user, server2)); let dbUser = res.data.data;
+
+        expect(dbUser.servers).toStrictEqual([{id: server.id, name: 'myserver'}, {id: server2.id, name: 'myserver2'}]);
+        delete dbUser.servers;
+        expect(_.isEqual(dbUser, preUser));
+
+    })
+
+    it('try to add a server that exist to a user that exist sending data in the body', async () => {
+
+
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute(user, server), {badData: 'Hola que tal'});
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+
+    })
+
+    it('try to add a server that exist to a user that exist sending data in the query', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute(user, server) + '?queryParam=hola');
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+
+    })
+
+    it('try to add a server that exist to a user that exist sending data in file format', async () => {
+
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+
+            let form = new FormData();
+
+            form.append('avatar', fs.createReadStream(path.join(config.test, incorrect.avatars.incorrect_format[0])));
+            await axi.put(getRoute(user, server), form);
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+
+    })
+
+    it('try to add a server that exist to a user that exist sending not mongoId in the params', async () => {
+        
+        try {
+            let user = await User(preparedUsers[0]).save();
+            let server = await Server({ name: 'myserver', creator: user._id }).save();
+            await axi.put(getRoute({id: 'sddfa'}, server));
+        } catch (err) {
+
+            BRValidator(err);
+            
+        }
+        
+    })
+
+})
+
+async function getUser(index) {
+    return new User(preparedUsers[index]).save(); 
+}
+
+describe('\naddFriend', () => {
+
+    let getRoute = (id, friendId) => ['user', id, 'addFriend', friendId].join('/');
+    
+    it('add friend to a user sending non mongoId as params', async () => {
+
+       
+        let user = await getUser(0);
+        axi.put(getRoute(user.id, ObjectId().toString() + 'dfasdfa'))
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+    it('add friend to a user sending body in request', async () => {
+
+       
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        axi.put(getRoute(user.id, friend.id), {badBody: 'sdfs'})
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+    it('add friend to a user sending query in request', async () => {
+
+       
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        axi.put(getRoute(user.id, friend.id) + '?badQuery=value')
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+    it('add friend to a user sending body file in request', async () => {
+
+       
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        let form = new FormData();
+        form.append('avatar', fs.createReadStream(path.join(config.test, incorrect.avatars.incorrect_format[0])))
+        axi.put(getRoute(user.id, friend.id), form)
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+})
+
+describe('\nremoveFriend', () => {
+
+    let getRoute = (id, friendId) => ['user', id, 'removeFriend', friendId].join('/');
+    
+    it('remove friend to a user sending non mongoId as params', async () => {
+
+       
+        let user = await getUser(0);
+        axi.put(getRoute(user.id, ObjectId().toString() + 'dfasdfa'))
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+    it('remove friend to a user sending body in request', async () => {
+
+       
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        axi.put(getRoute(user.id, friend.id), {badBody: 'sdfs'})
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+    it('remove friend to a user sending query in request', async () => {
+
+       
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        axi.put(getRoute(user.id, friend.id) + '?badQuery=value')
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+    it('remove friend to a user sending body file in request', async () => {
+
+       
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        let form = new FormData();
+        form.append('avatar', fs.createReadStream(path.join(config.test, incorrect.avatars.incorrect_format[0])))
+        axi.put(getRoute(user.id, friend.id), form)
+        .then(res => {throw {}})
+        .catch(err => BRValidator(err))
+        
+    })
+
+})
+
+describe('\naddFriend', () => {
+
+    let getRoute = (id, friendId) => ['user', id, 'addFriend', friendId].join('/');
+
+    it('add a existing friend to a existing user', async () => {
+
+        let user = await getUser(0);
+        let friend = await getUser(1);
+
+        user = await userController.myFindById(user.id).exec(); user = user.toObject();
+        let res = await axi.put(getRoute(user.id, friend.id)); let restUser = res.data.data;
+
+        expect(res.status).toBe(200);
+        expect(restUser.friends).toStrictEqual([{id: friend.id, name: friend.name, email: friend.email}]);
+        delete restUser.friends;
+        expect(_.isEqual(user, restUser));
+
+
+    })
+
+    it('add a friend to a user which is already a friend', async () => {
+
+        try {
+
+            let user = await getUser(0);
+            let friend = await getUser(1);
+            await user.addFriend(friend.id);
             await axi.put(getRoute(user.id, friend.id));
+            throw {}
+        } catch (err) {
+            ISEValidator(err);
+            checkFailFields(err.response.data, 'friendAlready');
+        }
+
+
+    })
+
+    it('add a existing friend to a non existing user', async () => {
+
+        try {
+
+            let friend = await getUser(0);
+            await axi.put(getRoute(ObjectId().toString(), friend.id));
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(404);
-            expect(err.response.data.error.secondUserNotFound).toBeDefined();
+        } catch (err) {
+            console.log(err);
+            NFValidator(err);
+            checkFailFields(err.response.data, 'mainUserNotFound');
         }
 
     })
 
-    it('add friend to a user sending non valid objectid', async () => {
+    it('add non existing friend to a existing user', async () => {
 
         try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-            await axi.put(getRoute(user.id, friend.id + 'dfasdfa'));
+            let user = await getUser(0);
+            await axi.put(getRoute(user.id, ObjectId().toString()));
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(400);
-            console.log(err);
+        } catch (err) {
+        
+            NFValidator(err);
+            checkFailFields(err.response.data, 'friendNotFound');
         }
 
-        await db.clearDatabase();
+    })
+
+    it('add non existing friend to a non existing user', async () => {
 
         try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-            await axi.put(getRoute(user.id + 'dafdafa', friend.id));
+            await axi.put(getRoute(ObjectId().toString(), ObjectId().toString()));
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(400);
-            console.log(err);
+        } catch (err) {
+           
+            NFValidator(err);
+            checkFailFields(err.response.data, 'mainUserNotFound');
         }
 
     })
 
 })
 
-describe.only('\nremoveFriendUser', () => {
+describe('\nremoveFriend', () => {
 
-    beforeAll(async () => {
-        await db.connect();
-        await db.clearDatabase();
+    let getRoute = (id, friendId) => ['user', id, 'removeFriend', friendId].join('/');
+
+    it('remove a existing friend to a existing user', async () => {
+
+        let user = await getUser(0);
+        let friend = await getUser(1);
+        await user.addFriend(friend.id);
+
+        user = await userController.myFindById(user.id).exec(); user = user.toObject();
+        let res = await axi.put(getRoute(user.id, friend.id)); let restUser = res.data.data;
+
+        expect(res.status).toBe(200);
+        expect(restUser.friends).toBeUndefined();
+        delete user.friends;
+        expect(_.isEqual(user, restUser));
+
+
     })
-    afterEach(async () => {
-        await db.clearDatabase();
-    })
-    afterAll(async () => {
-        await db.closeDatabase();
-    })
 
-    let getRoute = (id, friendId) => ['user', id, 'removeFriendUser', friendId].join('/');
-
-
-
-    it('remove friend from a user correct', async () => {
+    it('remove a existing friend to a user which is not a friend', async () => {
 
         try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
 
-            await userService.addFriendUser(user._id, friend._id);
-
-            let res = await axi.put(getRoute(user.id, friend.id));
-
-            let restUser = res.data.data;
-
-            expect(res.status).toBe(200);
-            checkUser(user, restUser);
-            expect(!restUser.friends.find(elem =>  elem._id == friend.id)).toBe(true);
-            
-            let newUser = await User.findById(user._id).exec();
-            let newFriend = await User.findById(friend._id).exec();
-
-            expect(newFriend.friends.find(elem => elem.equals(user._id))).toBe(undefined);
-            expect(newUser.friends.find(elem => elem.equals(friend._id))).toBe(undefined);
-
-        } catch(err) {console.log(err)}
-
-    })
-
-    it('remove a friend from a user which is not friend', async () => {
-
-        try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-
-            await userService.addFriendUser(user._id, friend._id);
-            await userService.removeFriendUser(user._id, friend._id);
-
-            let res = await axi.put(getRoute(user.id, friend.id));
-
-            throw {};
-        } catch(err) {
-            ISEValidator(err);
-            expect(err.response.data.error.notFriends).toBeDefined();
-        }
-
-    })
-
-    it('remove friend to a non existing user', async () => {
-        try {
-
-            let user = new User(preparedUsers[0]); await user.save();
-            await User.findByIdAndDelete(user._id);
-            let friend = new User(preparedUsers[1]); await friend.save();
+            let user = await getUser(0);
+            let friend = await getUser(1);
             await axi.put(getRoute(user.id, friend.id));
-            throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(404);
-            expect(err.response.data.error.mainUserNotFound).toBeDefined();
+            throw {}
+        } catch (err) {
+            ISEValidator(err);
+            checkFailFields(err.response.data, 'friendNot');
         }
+
+
     })
 
-    it('remove non existing friend to a user', async () => {
+    it('remove a existing friend to a non existing user', async () => {
+
         try {
 
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-            await User.findByIdAndDelete(friend._id);
-            let res = await axi.put(getRoute(user.id, friend.id));
+            let friend = await getUser(0);
+            await axi.put(getRoute(ObjectId().toString(), friend.id));
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(404);
-            expect(err.response.data.error.secondUserNotFound).toBeDefined();
+        } catch (err) {
+            NFValidator(err);
+            checkFailFields(err.response.data, 'mainUserNotFound');
         }
+
     })
 
-    it('remove friend to a user sending non valid objectid', async () => {
+    it('remove non existing friend to a existing user', async () => {
 
         try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-            await axi.put(getRoute(user.id, friend.id + 'dfasdfa'));
+            let user = await getUser(0);
+            await axi.put(getRoute(user.id, ObjectId().toString()));
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(400);
+        } catch (err) {
+        
+            NFValidator(err);
+            checkFailFields(err.response.data, 'friendNotFound');
         }
 
-        await db.clearDatabase();
+    })
+
+    it('remove non existing friend to a non existing user', async () => {
 
         try {
-            let user = new User(preparedUsers[0]); await user.save();
-            let friend = new User(preparedUsers[1]); await friend.save();
-            await axi.put(getRoute(user.id + 'dsfasdf', friend.id));
+            await axi.put(getRoute(ObjectId().toString(), ObjectId().toString()));
             throw {};
-        } catch(err) {
-            expect(err.response).toBeDefined();
-            expect(err.response.status).toBe(400);
+        } catch (err) {
+           
+            NFValidator(err);
+            checkFailFields(err.response.data, 'mainUserNotFound');
         }
 
     })
@@ -287,16 +686,6 @@ describe.only('\nremoveFriendUser', () => {
 
 describe('\nupdateUser', () => {
 
-    beforeAll(async () => {
-        await db.connect();
-        await db.clearDatabase();
-    })
-    afterEach(async () => {
-        await db.clearDatabase();
-    })
-    afterAll(async () => {
-        await db.closeDatabase();
-    })
 
     it('name of a user correct', async () => {
 
@@ -339,7 +728,7 @@ describe('\nupdateUser', () => {
         expect(path.extname(res.data.data.avatar)).toBe('.jpg');
         expect(
             fs.existsSync(
-                path.join(config.uploads, 
+                path.join(config.uploads,
                     res.data.data.avatar.split('.').slice(0, -1).join('.') + '.gif')))
         //expect(res.data.data.avatar.mimeType).toBe(path.extname(correct.avatars[0]));
     })
@@ -394,8 +783,8 @@ describe('\nupdateUser', () => {
 
         let form = new FormData();
         form.append('!avatar', fs.createReadStream(path.join(config.uploads, correct.avatars[0])));
-        await axi.put('user/' + user.id, form, {validateStatus: status => status == 400});
-      
+        await axi.put('user/' + user.id, form, { validateStatus: status => status == 400 });
+
     })
 
     it('invalid avatar format .pdf for avatar field', async () => {
@@ -406,14 +795,14 @@ describe('\nupdateUser', () => {
 
         try {
             await axi.put('user/' + user.id, form);
-        } catch(err) {
+        } catch (err) {
             //ISEValidator(err);
             expect(err.response).toBeDefined();
             expect(err.response.status).toBe(500);
             console.log(err.response.data);
             expect(err.response.data.error).toBeDefined();
             expect(
-                _.isEqual(Object.keys({avatar: undefined}), Object.keys(err.response.data.error))
+                _.isEqual(Object.keys({ avatar: undefined }), Object.keys(err.response.data.error))
             ).toBe(true);
         }
 
@@ -423,17 +812,6 @@ describe('\nupdateUser', () => {
 })
 
 describe('\ndeleteUser', () => {
-
-    beforeAll(async () => {
-        await db.connect();
-        await db.clearDatabase();
-    })
-    afterEach(async () => {
-        await db.clearDatabase();
-    })
-    afterAll(async () => {
-        await db.closeDatabase();
-    })
 
     it('delete a previus created user', async () => {
 
@@ -507,16 +885,6 @@ describe('\ndeleteUser', () => {
 
 describe('\ngetUser', () => {
 
-    beforeAll(async () => {
-        await db.connect();
-        await db.clearDatabase();
-    })
-    afterEach(async () => {
-        await db.clearDatabase();
-    })
-    afterAll(async () => {
-        await db.closeDatabase();
-    })
 
     it('get a user with a valid objectId that exist', async () => {
 
@@ -560,17 +928,6 @@ describe('\ngetUser', () => {
 })
 
 describe('\ncreateUser', () => {
-
-    beforeAll(async () => {
-        await db.connect();
-        await db.clearDatabase();
-    })
-    afterEach(async () => {
-        await db.clearDatabase();
-    })
-    afterAll(async () => {
-        await db.closeDatabase();
-    })
 
     it('create correctly with valid email, name and password', async () => {
 

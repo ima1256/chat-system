@@ -38,18 +38,6 @@ async function saveFile(file, data = []) {
     return data;
 }
 
-/*Jimp.read('lenna.png')
-    .then(lenna => {
-        return lenna
-            .resize(256, 256) // resize
-            .quality(60) // set JPEG quality
-            .greyscale() // set greyscale
-            .write('lena-small-bw.jpg'); // save
-    })
-    .catch(err => {
-        console.error(err);
-    });*/
-
 module.exports.deleteFile = async function (filePath) {
     fs.unlinkSync(path.join(config.uploads, filePath));
 }

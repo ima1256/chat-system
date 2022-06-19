@@ -1,6 +1,6 @@
 const User = require('../models/user');
 const _ = require('lodash');
-const {saveFile} = require('../utils/files');
+const { saveFile } = require('../utils/files');
 //const Server = require('../models/server');
 
 async function getUser(id) {
@@ -43,74 +43,43 @@ async function updateUser(id, usr) {
         }
 
         user = await User.findByIdAndUpdate(id, usr_, { new: true })
-        .populate('servers').populate('friends').exec();
+            .populate('servers').populate('friends').exec();
 
         return user;
     } catch (err) { console.log(err) }
 }
 
 //Puede llegar como parametro un objectId o un string, tenemos que mirar el tipo
-async function addFriendUser(id, friendId) {
+async function addFriend(id, friendId) {
 
     let user = await User.findById(id).exec();
-
     if (!user) throw { errors: { mainUserNotFound: 'the user dont exist' } };
 
-    let friend = await User.findById(friendId).exec();
-
-    if (!friend) throw { errors: { secondUserNotFound: 'the user dont exist' } }
-
-    if (user._id.equals(friend._id)) throw { errors: { friends: { kind: 'user defined', msg: 'cannot add user as its friend' } } };
-
-    user.friends.push(friend._id);
-    friend.friends.push(user._id);
-    user.markModified('friends');
-    friend.markModified('friends');
-    await user.save();
-    await friend.save();
-
-    user = await User.findById(id).
-    populate('servers').populate('friends').exec();
-
-    return user;
+    return await user.addFriend(friendId);
 }
 
 
-async function removeFriendUser(id, friendId) {
+async function removeFriend(id, friendId) {
+    
     let user = await User.findById(id).exec();
-
     if (!user) throw { errors: { mainUserNotFound: 'the user dont exist' } };
-
-    let friend = await User.findById(friendId).exec();
-
-    if (!friend) throw { errors: { secondUserNotFound: 'the user dont exist' } };
-
-    let removed = _.remove(user.friends, (value) => value.equals(friend._id));
-    if (removed.length == 0) throw {errors: { notFriends: 'the pair of users are not friends'}};
-    _.remove(friend.friends, (value) => value.equals(user._id));
-
-    user.markModified('friends');
-    friend.markModified('friends');
-    await user.save();
-    await friend.save();
-
-    user = await User.findById(id).
-    populate('servers').populate('friends').exec();
-
-    return user;
+    return await user.removeFriend(friendId);
 }
 
-async function addServerUser(id, serverId) {
+async function addServer(id, serverId) {
 
     let user = await User.findById(id).exec();
     if (!user) throw { errors: { mainUserNotFound: 'the user dont exist' } };
 
-    let server = await Server.findById(serverId).exec();
-    if (!server) throw { errors: { serverNotFound: 'the user dont exist' } };
+    return await user.addServer(serverId);
 
-    user.servers.push(server._id);
-    user.markModified('servers');
-    server.push()
+}
+
+async function removeServer(id, serverId) {
+
+    let user = await User.findById(id).exec();
+    if (!user) throw { errors: { mainUserNotFound: 'the user dont exist' } };
+    return await user.removeServer(serverId);
 
 }
 
@@ -125,7 +94,9 @@ module.exports = {
     getUser,
     createUser,
     updateUser,
-    addFriendUser,
-    removeFriendUser,
+    addFriend,
+    removeFriend,
+    addServer,
+    removeServer,
     deleteUser
 }

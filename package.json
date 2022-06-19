@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --testEnvironment=node --watch ./controllers/server.test.js",
+    "test": "jest --testEnvironment=node --runInBand --watch ./controllers/server.test.js",
     "start": "nodemon index.js --trace-warnings --ignore 'uploads/*'"
   },
   "author": "",
@@ -21,6 +21,7 @@
     "jimp": "^0.16.1",
     "joi-password-complexity": "^5.1.0",
     "lodash": "^4.17.21",
+    "lodash-contrib": "^4.1200.1",
     "moment": "^2.29.3",
     "mongodb": "^4.6.0",
     "mongodb-memory-server": "^8.6.0",

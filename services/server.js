@@ -10,7 +10,8 @@ function myFindById(id) {
     .populate('creator', 'name id')
     .populate('members', 'name id')
     .populate('moderators', 'name id')
-    .populate('textChannels', 'name').exec();
+    .populate('textChannels', 'name')
+    .populate('commands', 'name parameters');
 }
 
 async function createServer(srv) {
@@ -22,7 +23,7 @@ async function createServer(srv) {
     server.creator = creator._id;
 
     await server.save();
-    server = await myFindById(server._id).exec();
+    server = await myFindById(server._id);
 
     return server.toObject();
 
@@ -73,7 +74,7 @@ async function updateServer(srv) {
                 server = await server.removeModerator(srv.update.id); 
                 break;
             case 'addCommand':
-                server = await server.addCommand(srv.update.name, srv.update.params);
+                server = await server.addCommand(srv.update.name, srv.update.parameters);
                 break;
             case 'removeCommand':
                 server = await server.removeCommand(srv.update.name); 

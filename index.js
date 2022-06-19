@@ -29,12 +29,16 @@ app.use(fileUpload({ createParentPath: true }));  // enable files upload
 app.get('/user/:id', userController.getUser);
 app.post('/user', userController.createUser);
 app.put('/user/:id', userController.updateUser);
-app.put('/user/:id/addFriendUser/:friendId', userController.addFriendUser);
-app.put('/user/:id/removeFriendUser/:friendId', userController.removeFriendUser);
+app.put('/user/:id/addFriend/:friendId', userController.addFriend);
+app.put('/user/:id/removeFriend/:friendId', userController.removeFriend);
+app.put('/user/:id/addServer/:serverId', userController.addServer);
+app.put('/user/:id/removeServer/:serverId', userController.removeServer);
 app.delete('/user/:id', userController.deleteUser);
 
 //Server
 app.get('/server/:id', serverController.getServer);
+app.get('/server/:id/textChannel/:channelId/getMessages', serverController.getMessagesFromTextChannel);
+app.put('/server/:id/textChannel/:channelId/addMessages', serverController.addMessagesToTextChannel);
 app.post('/server', serverController.createServer);
 app.put('/server/:id/:operation', serverController.updateServer);
 app.delete('/server/:id', serverController.deleteServer);
